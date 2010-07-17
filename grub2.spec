@@ -14,7 +14,7 @@
 Name:           grub2
 Epoch:          1
 Version:        1.98
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Bootloader with support for Linux, Multiboot and more
 
 Group:          System Environment/Base
@@ -94,7 +94,6 @@ make %{?_smp_mflags}
 #include/grub/script.h:26:29: error: grub_script.tab.h: No such file or directory
 #make
 
-
 %install
 set -e
 rm -fr $RPM_BUILD_ROOT
@@ -159,13 +158,13 @@ rm -f /boot/%{name}/device.map
 %triggerin -- kernel, kernel-PAE
 exec >/dev/null 2>&1
 # Generate grub.cfg
-%{name}-mkconfig
+%{name}-mkconfig -o /boot/grub2/grub.cfg
 
 
 %triggerun -- kernel, kernel-PAE
 exec >/dev/null 2>&1
 # Generate grub.cfg
-%{name}-mkconfig
+%{name}-mkconfig -o /boot/grub2/grub.cfg
 
 
 %files -f grub.lang
@@ -210,6 +209,9 @@ exec >/dev/null 2>&1
 
 
 %changelog
+* Sat Jul 17 2010 Dennis Gilmore <dennis@ausil.us> - 1:1.98-3
+- correctly generate a grub.cfg on kernel update
+
 * Fri May 28 2010 Dennis Gilmore <dennis@ausil.us> - 1:1.98-2
 - add patch so grub2-probe works with lvm to detect devices correctly
 
