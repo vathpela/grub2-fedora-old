@@ -243,6 +243,8 @@
 	* grub-core/osdep/windows/platform.c (get_platform): Fix EFI
 	detection.
 
+=======
+>>>>>>> arm64: set correct length of device path end entry
 2013-12-24  Vladimir Serbinenko  <phcoder@gmail.com>
 
 	* configure.ac: Set version to 2.02~beta2.
