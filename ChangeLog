@@ -1,3 +1,228 @@
+2014-01-29  Paulo Flabiano Smorigo  <pfsmorigo@br.ibm.com>
+
+	* .gitignore: add missing files and .exe variants.
+
+2014-01-26  Vladimir Serbinenko  <phcoder@gmail.com>
+
+	* grub-core/term/at_keyboard.c: Tolerate missing keyboard.
+
+2014-01-26  Mike Gilbert <floppym@gentoo.org>
+
+	grub-install: support for partitioned partx loop devices.
+
+	* grub-core/osdep/linux/getroot.c (grub_util_part_to_disk): Detect
+	/dev/loopX as being the parent of /dev/loopXpY.
+
+2014-01-26  Vladimir Serbinenko  <phcoder@gmail.com>
+
+	* grub-core/term/serial.c (grub_serial_register): Fix invalid free.
+	Ensure that pointers are inited to NULL and that pointers are not
+	accessed after free.
+
+2014-01-25  Andrey Borzenkov <arvidjaar@gmail.com>
+
+	* include/grub/crypto.h: Replace __attribute__ ((format (printf)) with
+	__attribute__ ((format (__printf__)) to fix compilation under MinGW-w64.
+	* include/grub/emu/misc.h: ... and here.
+	* include/grub/err.h: ... and here.
+	* util/import_gcry.py: ... and here (in files g10lib.h).
+
+2014-01-25  Andrey Borzenkov <arvidjaar@gmail.com>
+
+	* util/grub-mkimage.c: Make prefix argument mandatory.
+
+2014-01-24  Vladimir Serbinenko  <phcoder@gmail.com>
+
+	Fix several translatable strings.
+
+	Suggested by: D. Prévot.
+
+2014-01-24  Vladimir Serbinenko  <phcoder@gmail.com>
+
+	* util/grub-install.c: List available targets.
+
+2014-01-23  Colin Watson  <cjwatson@ubuntu.com>
+
+	* util/grub-install.c (write_to_disk): Add an info message.
+
+2014-01-21  Andrey Borzenkov <arvidjaar@gmail.com>
+
+	* Makefile.am: Allow adding extra files to generated Windows ZIP
+	archive by setting GRUB_WINDOWS_EXTRA_DIST.
+
+2014-01-21  Andrey Borzenkov <arvidjaar@gmail.com>
+
+	* configure.ac: Look for DejaVuSans also in /usr/share/fonts/truetype.
+	Show detected font path in summary.
+
+2014-01-21  Paulo Flabiano Smorigo  <pfsmorigo@br.ibm.com>
+
+	* grub-core/net/arp.c (grub_net_arp_send_request): Increase network try
+	interval gradually.
+	* grub-core/net/icmp6.c (grub_net_icmp6_send_request): Likewise.
+	* grub-core/net/net.c (grub_net_fs_read_real): Likewise.
+	* grub-core/net/tftp.c (tftp_open): Likewise.
+	* include/grub/net.h (GRUB_NET_INTERVAL_ADDITION): New define.
+
+2014-01-21  Paulo Flabiano Smorigo  <pfsmorigo@br.ibm.com>
+
+	* grub-core/net/net.c (receive_packets): Change stop condition to avoid
+	infinite loops.
+
+	In net/net.c there is a while (1) that only exits if there is a stop
+	condition and more then 10 packages or if there is no package received.
+
+	If GRUB is idle and enter in this loop, the only condition to leave is
+	if it doesn't have incoming packages. In a network with heavy traffic
+	this never happens.
+
+2014-01-19  Colin Watson  <cjwatson@ubuntu.com>
+
+	* grub-core/osdep/freebsd/hostdisk.c (grub_util_fd_open): Ignore
+	EPERM when modifying kern.geom.debugflags.  It is only a problem for
+	such things as installing GRUB to the MBR, in which case there'll be
+	an error later anyway, not for opening files during tests.
+
+2014-01-18  Andrey Borzenkov <arvidjaar@gmail.com>
+
+	* grub-core/Makefile.am: Build grub_emu_init.[ch] from MODULE_FILES
+	instead of MOD_FILES.
+	* grub-core/genemuinit.sh: Simplify stripping of suffix so it works
+	both with and without .exe.
+	* grub-core/genemuinitheader.sh: Same.
+
+2014-01-18  Vladimir Serbinenko  <phcoder@gmail.com>
+
+	* util/grub-install.c: Fix a typo.
+
+2014-01-18  Vladimir Serbinenko  <phcoder@gmail.com>
+
+	* grub-core/normal/main.c (read_config_file): Buffer config file.
+	Reduces boot time.
+
+2014-01-18  Andrey Borzenkov <arvidjaar@gmail.com>
+
+	* acinclude.m4 (grub_CHECK_LINK_DIR): Check that we can also remove
+	symbolic link to directory. It fails in Msys shell on Windows 2003.
+
+2014-01-18  Vladimir Serbinenko  <phcoder@gmail.com>
+
+	* Makefile.am (default_payload.elf): Add modules
+	multiboot cbmemc linux16 gzio echo help.
+
+2014-01-18  Mike Gilbert <floppym@gentoo.org>
+
+	* Makefile.util.def: Link grub-ofpathname with zfs libs.
+
+2014-01-18  Vladimir Serbinenko  <phcoder@gmail.com>
+
+	* grub-core/commands/macbless.c: Rename FILE and DIR to avoid
+	conflicts.
+
+	Reported by: Andrey Borzenkov.
+
+2014-01-18  Andrey Borzenkov <arvidjaar@gmail.com>
+
+	* include/grub/misc.h: Move macros for compiler features to ...
+	* include/grub/compiler.h: ... new file.
+	* include/grub/list.h: Include <grub/compiler.h> instead of <grub/misc.h>.
+	* grub-core/commands/fileXX.c: Include <grub/misc.h>.
+	* grub-core/efiemu/prepare.c: Include <grub/misc.h>.
+	* grub-core/loader/i386/xen_file.c: Include <grub/misc.h>.
+	* grub-core/loader/i386/xen_fileXX.c: Include <grub/misc.h>.
+	* grub-core/video/capture.c: Include <grub/misc.h>.
+	* include/grub/command.h: Include <grub/misc.h>.
+	* include/grub/dl.h: Include <grub/misc.h>.
+	* include/grub/procfs.h: Include <grub/misc.h>.
+
+2014-01-18  Andrey Borzenkov <arvidjaar@gmail.com>
+
+	* configure.ac: Add support for BUILD_EXEEXT and use it ...
+	* Makefile.am: ... here.
+	* Makefile.util.def: ... and here.
+	* grub-core/Makefile.am: ... and here.
+
+2014-01-18  Andrey Borzenkov <arvidjaar@gmail.com>
+
+	* include/grub/osdep/hostfile_windows.h: Use _W64 instead of
+	FILE_OFFSET_BITS to differentiate between native MinGW and Mingw W64.
+
+2014-01-18  Vladimir Serbinenko  <phcoder@gmail.com>
+
+	* grub-core/term/terminfo.c: Recognize keys F1-F12.
+
+2014-01-18  Andrey Borzenkov <arvidjaar@gmail.com>
+
+	* configure.ac: Add support for BUILD_LDFLAGS.
+	* Makefile.am: Use BUILD_LDFLAGS for build time programs here ...
+	* grub-core/Makefile.am: ... and here.
+	* INSTALL: Mention BUILD_LDFLAGS.
+
+2014-01-18  Vladimir Serbinenko  <phcoder@gmail.com>
+
+	* util/grub-mount.c: Extend GCC warning workaround to grub-mount.
+
+2014-01-18  Vladimir Serbinenko  <phcoder@gmail.com>
+
+	* grub-core/kern/efi/efi.c: Ensure that the result starts with /
+	and has no //.
+
+2014-01-18  Vladimir Serbinenko  <phcoder@gmail.com>
+
+	* NEWS: Add few missing entries.
+
+2014-01-17  Colin Watson  <cjwatson@ubuntu.com>
+
+	* util/grub.d/00_header.in (make_timeout): Use && rather than test
+	-a.
+	* util/grub.d/10_windows.in: Likewise.
+	* util/grub.d/10_netbsd.in (netbsd_load_fs_module): Use || rather
+	than test -o.
+	* util/grub.d/30_os-prober.in: Use && rather than test -a, and ||
+	rather than test -o.
+
+2014-01-17  Colin Watson  <cjwatson@ubuntu.com>
+
+	* grub-core/osdep/freebsd/hostdisk.c (grub_util_fd_open): Remove
+	redundant preprocessor conditional.
+
+2014-01-08  Colin Watson  <cjwatson@ubuntu.com>
+
+	* Makefile.util.def (grub-macbless): Change mansection to 8.
+
+2014-01-07  Leif Lindholm <leif.lindholm@linaro.org>
+
+	* grub-core/loader/arm64/linux.c: correctly set device path end length.
+
+2014-01-07  Andrey Borzenkov <arvidjaar@gmail.com>
+
+	* util/grub-install.c: Use bootaa64.efi instead of bootaarch64.efi on
+	arm64 to comply with EFI specification. Also use grubaa64.efi for
+	consistency.
+	* util/grub-mkrescue.c: Change to use bootaa64.efi too.
+
+2014-01-07  Andrey Borzenkov <arvidjaar@gmail.com>
+
+	* include/grub/osdep/hostfile_windows.h: Do not redefine fseeko/ftello
+	on MinGW-64 when compiling for 32 bits.
+
+2013-12-30  Andrey Borzenkov <arvidjaar@gmail.com>
+
+	* grub-core/Makefile.core.def: strip .eh_frame section for arm64-efi.
+
+2013-12-30  Vladimir Serbinenko  <phcoder@gmail.com>
+
+	* NEWS: Add few missing entries. Correct existing ones.
+
+2013-12-28  Vladimir Serbinenko  <phcoder@gmail.com>
+
+	Don't abort() on unavailable coreboot tables if not running on coreboot.
+
+2013-12-28  Andrey Borzenkov <arvidjaar@gmail.com>
+
+	* grub-core/kern/emu/misc.c: Remove unused error.h; fixes compilation
+	on mingw.
+
 2013-12-28  Colin Watson  <cjwatson@ubuntu.com>
 
 	* NEWS: The cmosclean command in fact dates back to 1.99.  Remove
