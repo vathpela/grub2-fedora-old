@@ -70,6 +70,13 @@ EXPORT_FUNC (__umoddi3) (grub_uint64_t a, grub_uint64_t b);
 
 #endif
 
+#ifdef __powerpc__
+
+int
+EXPORT_FUNC(__ucmpdi2) (grub_uint64_t a, grub_uint64_t b);
+
+#endif
+
 #if defined (__APPLE__) && defined(__i386__)
 #define GRUB_BUILTIN_ATTR  __attribute__ ((regparm(0)))
 #else

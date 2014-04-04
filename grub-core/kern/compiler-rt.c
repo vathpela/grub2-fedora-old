@@ -198,3 +198,22 @@ void __chkstk_ms (void)
 {
 }
 #endif
+
+#ifdef __powerpc__
+
+int
+__ucmpdi2 (grub_uint64_t a, grub_uint64_t b)
+{
+  if ((grub_uint32_t) (a >> 32) < (grub_uint32_t) (b >> 32))
+    return 0;
+  else if ((grub_uint32_t) (a >> 32) > (grub_uint32_t) (b >> 32))
+    return 2;
+
+  if ((grub_uint32_t) a < (grub_uint32_t) b)
+    return 0;
+  else if ((grub_uint32_t) a > (grub_uint32_t) b)
+    return 2;
+  return 1;
+}
+
+#endif
