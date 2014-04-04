@@ -132,6 +132,7 @@ kernel = {
   common = kern/rescue_reader.c;
   common = kern/term.c;
 
+  noemu = kern/compiler-rt.c;
   noemu = kern/mm.c;
   noemu = kern/time.c;
   noemu = kern/generic/millisleep.c;
@@ -263,7 +264,7 @@ kernel = {
   arm = kern/arm/cache_armv7.S;
   extra_dist = kern/arm/cache.S;
   arm = kern/arm/cache.c;
-  arm = kern/arm/misc.S;
+  arm = kern/arm/compiler-rt.S;
 
   arm64 = kern/arm64/cache.c;
   arm64 = kern/arm64/cache_flush.S;
