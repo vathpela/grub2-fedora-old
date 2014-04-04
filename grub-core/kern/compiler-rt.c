@@ -178,7 +178,7 @@ __umoddi3 (grub_uint64_t a, grub_uint64_t b)
 void __attribute__ ((noreturn))
 abort (void)
 {
-  grub_abort ();
+  grub_fatal ("compiler abort");
 }
 #endif
 
@@ -199,7 +199,7 @@ void __chkstk_ms (void)
 }
 #endif
 
-#ifdef __powerpc__
+#if defined (__powerpc__) || defined(__mips__)
 
 int
 __ucmpdi2 (grub_uint64_t a, grub_uint64_t b)

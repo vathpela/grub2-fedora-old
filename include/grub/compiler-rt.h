@@ -70,7 +70,7 @@ EXPORT_FUNC (__umoddi3) (grub_uint64_t a, grub_uint64_t b);
 
 #endif
 
-#ifdef __powerpc__
+#if defined (__powerpc__) || defined(__mips__)
 
 int
 EXPORT_FUNC(__ucmpdi2) (grub_uint64_t a, grub_uint64_t b);
@@ -91,6 +91,13 @@ void *GRUB_BUILTIN_ATTR EXPORT_FUNC(memset) (void *s, int c, grub_size_t n);
 
 #ifdef __APPLE__
 void GRUB_BUILTIN_ATTR EXPORT_FUNC (__bzero) (void *s, grub_size_t n);
+#endif
+
+#if defined (__MINGW32__) || defined (__CYGWIN__)
+void EXPORT_FUNC (__register_frame_info) (void);
+void EXPORT_FUNC (__deregister_frame_info) (void);
+void EXPORT_FUNC (___chkstk_ms) (void);
+void EXPORT_FUNC (__chkstk_ms) (void);
 #endif
 
 #endif

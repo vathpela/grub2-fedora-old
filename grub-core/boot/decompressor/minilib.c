@@ -21,6 +21,18 @@
 #include <grub/decompressor.h>
 
 void *
+grub_memset (void *s, int c, grub_size_t len)
+{
+  grub_uint8_t *ptr;
+  for (ptr = s; len; ptr++, len--)
+    *ptr = c;
+  return s;
+}
+
+void *
+memset (void *s, int c, grub_size_t len);
+
+void *
 memset (void *s, int c, grub_size_t len)
 {
   grub_uint8_t *ptr;
