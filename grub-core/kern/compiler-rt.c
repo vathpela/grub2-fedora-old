@@ -201,17 +201,36 @@ void __chkstk_ms (void)
 
 #if defined (__powerpc__) || defined(__mips__)
 
+union component64
+{
+  grub_uint64_t full;
+  struct
+  {
+#ifdef GRUB_CPU_WORDS_BIGENDIAN
+    grub_uint32_t high;
+    grub_uint32_t low;
+#else
+    grub_uint32_t low;
+    grub_uint32_t high;
+#endif
+  };
+};
+
 int
 __ucmpdi2 (grub_uint64_t a, grub_uint64_t b)
 {
-  if ((grub_uint32_t) (a >> 32) < (grub_uint32_t) (b >> 32))
+  union component64 ac, bc;
+  ac.full = a;
+  bc.full = b;
+
+  if (ac.high < bc.high)
     return 0;
-  else if ((grub_uint32_t) (a >> 32) > (grub_uint32_t) (b >> 32))
+  else if (ac.high > bc.high)
     return 2;
 
-  if ((grub_uint32_t) a < (grub_uint32_t) b)
+  if (ac.low < bc.low)
     return 0;
-  else if ((grub_uint32_t) a > (grub_uint32_t) b)
+  else if (ac.low > bc.low)
     return 2;
   return 1;
 }
