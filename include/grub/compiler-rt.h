@@ -105,7 +105,6 @@ void GRUB_BUILTIN_ATTR EXPORT_FUNC (__bzero) (void *s, grub_size_t n);
 void EXPORT_FUNC (__register_frame_info) (void);
 void EXPORT_FUNC (__deregister_frame_info) (void);
 void EXPORT_FUNC (___chkstk_ms) (void);
-void EXPORT_FUNC (__chkstk_ms) (void);
 #endif
 
 #endif

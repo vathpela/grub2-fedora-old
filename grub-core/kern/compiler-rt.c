@@ -190,11 +190,8 @@ void __register_frame_info (void)
 void __deregister_frame_info (void)
 {
 }
-void ___chkstk_ms (void)
-{
-}
 
-void __chkstk_ms (void)
+void ___chkstk_ms (void)
 {
 }
 #endif
