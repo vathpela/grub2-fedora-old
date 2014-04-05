@@ -1027,7 +1027,7 @@ CPPFLAGS="$TARGET_CPPFLAGS"
 if test x$target_cpu = xi386 || test x$target_cpu = xx86_64 || test "x$grub_cv_cc_target_clang" = xyes ; then
 TARGET_LIBGCC=
 else
-TARGET_LIBGCC=-lgcc
+TARGET_LIBGCC=
 fi
 
 LIBS="$TARGET_LIBGCC"
@@ -1609,7 +1609,7 @@ if test x"$enable_werror" != xno ; then
 fi
 
 if test "x$grub_cv_cc_target_clang" = xno; then
-   TARGET_LDFLAGS_STATIC_LIBGCC="-static-libgcc"
+   TARGET_LDFLAGS_STATIC_LIBGCC=""
 else
    TARGET_LDFLAGS_STATIC_LIBGCC=
 fi
