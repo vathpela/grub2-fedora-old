@@ -33,12 +33,6 @@ void EXPORT_FUNC (__ashrdi3) (void);
 # ifdef HAVE___LSHRDI3
 void EXPORT_FUNC (__lshrdi3) (void);
 # endif
-# ifdef HAVE___BSWAPSI2
-void EXPORT_FUNC (__bswapsi2) (void);
-# endif
-# ifdef HAVE___BSWAPDI2
-void EXPORT_FUNC (__bswapdi2) (void);
-# endif
 #endif
 
 #ifdef HAVE__RESTGPR_14_X

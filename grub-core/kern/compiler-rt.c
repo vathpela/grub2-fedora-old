@@ -216,6 +216,7 @@ union component64
   };
 };
 
+/* Based on libgcc2.c from gcc suite.  */
 int
 __ucmpdi2 (grub_uint64_t a, grub_uint64_t b)
 {
@@ -234,5 +235,30 @@ __ucmpdi2 (grub_uint64_t a, grub_uint64_t b)
     return 2;
   return 1;
 }
+
+/* Based on libgcc2.c from gcc suite.  */
+grub_uint32_t
+__bswapsi2 (grub_uint32_t u)
+{
+  return ((((u) & 0xff000000) >> 24)
+	  | (((u) & 0x00ff0000) >>  8)
+	  | (((u) & 0x0000ff00) <<  8)
+	  | (((u) & 0x000000ff) << 24));
+}
+
+/* Based on libgcc2.c from gcc suite.  */
+grub_uint64_t
+__bswapdi2 (grub_uint64_t u)
+{
+  return ((((u) & 0xff00000000000000ull) >> 56)
+	  | (((u) & 0x00ff000000000000ull) >> 40)
+	  | (((u) & 0x0000ff0000000000ull) >> 24)
+	  | (((u) & 0x000000ff00000000ull) >>  8)
+	  | (((u) & 0x00000000ff000000ull) <<  8)
+	  | (((u) & 0x0000000000ff0000ull) << 24)
+	  | (((u) & 0x000000000000ff00ull) << 40)
+	  | (((u) & 0x00000000000000ffull) << 56));
+}
+
 
 #endif
