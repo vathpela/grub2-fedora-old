@@ -221,7 +221,7 @@ __ashldi3 (grub_uint64_t u, int b)
     return u;
 
   const union component64 uu = {.full = u};
-  const int bm = W_TYPE_SIZE - b;
+  const int bm = 32 - b;
   union component64 w;
 
   if (bm <= 0)
