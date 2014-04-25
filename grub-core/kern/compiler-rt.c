@@ -196,8 +196,6 @@ void ___chkstk_ms (void)
 }
 #endif
 
-#if defined (__powerpc__) || defined(__mips__)
-
 union component64
 {
   grub_uint64_t full;
@@ -212,6 +210,39 @@ union component64
 #endif
   };
 };
+
+#if defined (__powerpc__)
+
+/* Based on libgcc2.c from gcc suite.  */
+grub_uint64_t
+__ashldi3 (grub_uint64_t u, int b)
+{
+  if (b == 0)
+    return u;
+
+  const union component64 uu = {.full = u};
+  const int bm = W_TYPE_SIZE - b;
+  union component64 w;
+
+  if (bm <= 0)
+    {
+      w.low = 0;
+      w.high = (grub_uint32_t) uu.low << -bm;
+    }
+  else
+    {
+      const grub_uint32_t carries = (grub_uint32_t) uu.low >> bm;
+
+      w.low = (grub_uint32_t) uu.low << b;
+      w.high = ((grub_uint32_t) uu.high << b) | carries;
+    }
+
+  return w.full;
+}
+
+#endif
+
+#if defined (__powerpc__) || defined(__mips__)
 
 /* Based on libgcc2.c from gcc suite.  */
 int

@@ -24,9 +24,6 @@
 
 /* On x86 these functions aren't really needed. Save some space.  */
 #if !defined (__i386__) && !defined (__x86_64__)
-# ifdef HAVE___ASHLDI3
-void EXPORT_FUNC (__ashldi3) (void);
-# endif
 # ifdef HAVE___ASHRDI3
 void EXPORT_FUNC (__ashrdi3) (void);
 # endif

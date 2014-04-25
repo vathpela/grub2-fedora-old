@@ -77,6 +77,11 @@ EXPORT_FUNC(__ucmpdi2) (grub_uint64_t a, grub_uint64_t b);
 
 #endif
 
+#if defined (__powerpc__)
+grub_uint64_t
+__ashldi3 (grub_uint64_t u, int b);
+#endif
+
 #if defined (__powerpc__) || defined(__mips__) || defined(__sparc__)
 grub_uint32_t
 EXPORT_FUNC(__bswapsi2) (grub_uint32_t u);
