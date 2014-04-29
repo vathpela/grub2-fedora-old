@@ -27,9 +27,6 @@
 # ifdef HAVE___ASHRDI3
 void EXPORT_FUNC (__ashrdi3) (void);
 # endif
-# ifdef HAVE___LSHRDI3
-void EXPORT_FUNC (__lshrdi3) (void);
-# endif
 #endif
 
 #if defined (__arm__)

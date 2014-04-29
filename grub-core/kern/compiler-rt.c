@@ -215,6 +215,34 @@ union component64
 
 /* Based on libgcc2.c from gcc suite.  */
 grub_uint64_t
+__lshrdi3 (grub_uint64_t u, int b)
+{
+  if (b == 0)
+    return u;
+
+  const union component64 uu = {.full = u};
+  const int bm = 32 - b;
+  union component64 w;
+
+  if (bm <= 0)
+    {
+      w.high = 0;
+      w.low = (grub_uint32_t) uu.high >> -bm;
+    }
+  else
+    {
+      const grub_uint32_t carries = (grub_uint32_t) uu.high << bm;
+
+      w.high = (grub_uint32_t) uu.high >> b;
+      w.low = ((grub_uint32_t) uu.low >> b) | carries;
+    }
+
+  return w.full;
+}
+
+
+/* Based on libgcc2.c from gcc suite.  */
+grub_uint64_t
 __ashldi3 (grub_uint64_t u, int b)
 {
   if (b == 0)
