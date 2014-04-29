@@ -124,6 +124,9 @@ grub_uint64_t
 EXPORT_FUNC(__ashldi3) (grub_uint64_t u, int b);
 
 grub_uint64_t
+EXPORT_FUNC(__ashrdi3) (grub_uint64_t u, int b);
+
+grub_uint64_t
 EXPORT_FUNC (__lshrdi3) (grub_uint64_t u, int b);
 #endif
 

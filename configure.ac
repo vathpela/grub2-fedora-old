@@ -1042,9 +1042,6 @@ fi
 CFLAGS="$TARGET_CFLAGS -nostdlib $DEFSYM"
 fi
 
-# Check for libgcc symbols
-AC_CHECK_FUNCS(__ashrdi3)
-
 if test "x$TARGET_APPLE_LINKER" = x1 ; then
 CFLAGS="$TARGET_CFLAGS -nostdlib -static"
 else

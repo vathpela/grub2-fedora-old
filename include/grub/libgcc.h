@@ -15,20 +15,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with GRUB.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-/* We need to include config-util.h.in for HAVE_*.  */
-#ifndef __STDC_VERSION__
-#define __STDC_VERSION__ 0
-#endif
-#include <config-util.h>
-
-/* On x86 these functions aren't really needed. Save some space.  */
-#if !defined (__i386__) && !defined (__x86_64__)
-# ifdef HAVE___ASHRDI3
-void EXPORT_FUNC (__ashrdi3) (void);
-# endif
-#endif
-
 #if defined (__arm__)
 void EXPORT_FUNC (__aeabi_lasr) (void);
 void EXPORT_FUNC (__aeabi_llsl) (void);
