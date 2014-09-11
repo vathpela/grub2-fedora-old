@@ -2192,10 +2192,12 @@ module = {
   x86 = lib/i386/backtrace.c;
   i386_xen = lib/i386/backtrace.c;
   x86_64_xen = lib/i386/backtrace.c;
+  arm64 = lib/arm64/backtrace.c;
   common = lib/backtrace.c;
   enable = x86;
   enable = i386_xen;
   enable = x86_64_xen;
+  enable = arm64;
 };
 
 module = {
