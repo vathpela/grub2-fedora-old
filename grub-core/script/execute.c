@@ -378,10 +378,16 @@ grub_script_env_get (const char *name, grub_script_arg_type_t type)
 	}
     }
 
+  grub_dprintf("scripting", "argv_args_malloc %p\n", result.args);
+  for (i = 0; i < result.argc; i++)
+    grub_dprintf("scripting", "argv_arg_malloc %p\n", result.args[i]);
   return result.args;
 
  fail:
 
+  grub_dprintf("scripting", "argv_args_malloc %p\n", result.args);
+  for (i = 0; i < result.argc; i++)
+    grub_dprintf("scripting", "argv_arg_malloc %p\n", result.args[i]);
   grub_script_argv_free (&result);
   return 0;
 }
@@ -805,12 +811,23 @@ grub_script_arglist_to_argv (struct grub_script_arglist *arglist,
 	  
 	  if (failed)
 	    {
+  grub_dprintf("scripting", "argv_args_malloc %p\n", unexpanded.args);
+  for (i = 0; i < unexpanded.argc; i++)
+    grub_dprintf("scripting", "argv_arg_malloc %p\n", unexpanded.args[i]);
 	      grub_script_argv_free (&unexpanded);
 	      goto fail;
 	    }
 	}
     }
+
+  grub_dprintf("scripting", "argv_args_malloc %p\n", unexpanded.args);
+  for (i = 0; i < unexpanded.argc; i++)
+    grub_dprintf("scripting", "argv_arg_malloc %p\n", unexpanded.args[i]);
   grub_script_argv_free (&unexpanded);
+
+  grub_dprintf("scripting", "argv_args_malloc %p\n", result.args);
+  for (i = 0; i < result.argc; i++)
+    grub_dprintf("scripting", "argv_arg_malloc %p\n", result.args[i]);
 
   *argv = result;
   return 0;

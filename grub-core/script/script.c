@@ -47,7 +47,8 @@ grub_script_malloc (struct grub_parser_param *state, grub_size_t size)
   if (!mem)
     return 0;
 
-  grub_dprintf ("scripting", "malloc %p\n", mem);
+  grub_dprintf ("scripting", "malloc 0x%016lx %lu (really 0x%016lx %lu)\n", &mem->mem, size,
+		mem, (size + sizeof (*mem) - sizeof (char)));
   mem->next = state->memused;
   state->memused = mem;
   return (void *) &mem->mem;

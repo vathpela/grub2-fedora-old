@@ -48,8 +48,12 @@ grub_script_argv_free (struct grub_script_argv *argv)
   if (argv->args)
     {
       for (i = 0; i < argv->argc; i++)
-	grub_free (argv->args[i]);
+	{
+	  grub_dprintf ("scripting", "argv_arg_free %p\n", argv->args[i]);
+	  grub_free (argv->args[i]);
+	}
 
+      grub_dprintf ("scripting", "argv_args_free %p\n", argv->args);
       grub_free (argv->args);
     }
 
