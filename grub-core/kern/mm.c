@@ -67,6 +67,7 @@
 #include <grub/dl.h>
 #include <grub/i18n.h>
 #include <grub/mm_private.h>
+#include <grub/term.h>
 
 #ifdef MM_DEBUG
 # undef grub_malloc
@@ -113,8 +114,9 @@ grub_mm_init_region (void *addr, grub_size_t size)
   grub_mm_header_t h;
   grub_mm_region_t r, *p, q;
 
-#if 0
-  grub_printf ("Using memory for heap: start=%p, end=%p\n", addr, addr + (unsigned int) size);
+#if 1
+  grub_printf ("Using memory for heap: start=%p, end=%p\n", addr,
+  	(void *)((unsigned long)addr + (unsigned int) size));
 #endif
 
   /* Exclude last 4K to avoid overflows. */
@@ -314,6 +316,166 @@ grub_real_malloc (grub_mm_header_t *first, grub_size_t n, grub_size_t align)
   return 0;
 }
 
+#ifndef GRUB_UTIL
+
+#define MAX_STACK_FRAME_INDEX 6
+#define MAX_STACK_FRAME 102400
+#define ALLOC_DEPTH 90
+#define ALLOC_BUFFER_ENTRIES 16384
+#define ALIGN(addr, align) (addr + ((align - (addr % align)) % align))
+
+#define TYPE_NONE 1
+#define TYPE_ALLOC 2
+#define TYPE_FREE 3
+
+struct alloc_entry {
+	int type;
+	char cmd[40];
+	void *stack[MAX_STACK_FRAME_INDEX + 1];
+};
+
+struct allocation {
+	void *addr;
+	grub_uint64_t serial;
+	int alloc_entry;
+	int allocs;
+	int frees;
+	struct alloc_entry alloc_entries[ALLOC_DEPTH];
+};
+
+void print_stack(struct allocation *alloc, int maxallocs, int maxfrees);
+int unwind_frame (unsigned long *fp, unsigned long *sp, unsigned long *pc);
+void * get_return_address(unsigned int level);
+int get_buffer_index(void *p);
+
+struct allocation alloc_buffer[ALLOC_BUFFER_ENTRIES] = { { 0, }};
+int alloc_current = 0;
+grub_uint64_t alloc_serial = 0;
+
+extern int is_in_normal;
+
+int
+unwind_frame (unsigned long *fp, unsigned long *sp, unsigned long *pc)
+{
+  unsigned long high, low;
+  unsigned long newfp = *fp;
+
+  low = *sp;
+  high = ALIGN(low, MAX_STACK_FRAME);
+
+  if (newfp < low || newfp > high - 0x18 || newfp & 0xf)
+    return -1;
+
+  *sp = newfp + 0x10;
+  *fp = *(unsigned long *)newfp;
+  /* fp + 8 would be the pc when we return, but we want the caller instead */
+  *pc = *(unsigned long *)(newfp + 8) - 4;
+
+  return 0;
+}
+
+void *
+get_return_address(unsigned int level)
+{
+  register unsigned long current_sp asm("sp");
+  unsigned long fp = (unsigned long)__builtin_frame_address(0);
+  unsigned long pc = (unsigned long)get_return_address;
+  unsigned long sp = current_sp;
+  unsigned int i;
+
+  for (i = 0; i < level; i++)
+    {
+      if (i > MAX_STACK_FRAME_INDEX)
+	return NULL;
+      if (unwind_frame (&fp, &sp, &pc) < 0)
+	return NULL;
+    }
+
+  if (pc == 0x100000001 || pc == 0x3d0)
+    {
+      grub_printf("Got unreasonable %%pc value %p\n", (void *)pc);
+      return NULL;
+    }
+  return (void *)pc;
+}
+
+#define write_stack(pc, start)						  \
+  ({									  \
+    int __i, __j;							  \
+    for (__i = 0, __j = start; __i < MAX_STACK_FRAME_INDEX; __i++, __j++) \
+      {									  \
+        pc[__i] = get_return_address(__j);				  \
+	if (pc[__i] == (void *)0x100000001 ||				  \
+	    pc[__i] == (void *)0x3d0)					  \
+	  {								  \
+	    pc[__i] = NULL;						  \
+	  }								  \
+      }									  \
+   pc[MAX_STACK_FRAME_INDEX] = NULL;					  \
+  })
+
+int
+get_buffer_index(void *p)
+{
+  int i, j;
+  int found = 0;
+  for (i = alloc_current ? alloc_current -1 : 0; i >= 0; i--)
+    {
+      if (alloc_buffer[i].addr == 0)
+	break;
+
+      if (alloc_buffer[i].addr == p)
+	{
+	  found = 1;
+	  break;
+	}
+    }
+
+  if (found)
+    return i;
+
+  i = alloc_current++;
+  if (alloc_current == ALLOC_BUFFER_ENTRIES)
+    {
+      int k;
+      if (is_in_normal)
+	grub_printf("Resetting alloc_current to 0\n");
+      alloc_current = 0;
+      alloc_buffer[0].addr = NULL;
+      alloc_buffer[0].serial = 0;
+      alloc_buffer[0].alloc_entry = 0;
+      alloc_buffer[0].allocs = 0;
+      alloc_buffer[0].frees = 0;
+      for (k = 0; k < ALLOC_DEPTH; k++)
+	{
+	  for (j = 0; j < MAX_STACK_FRAME_INDEX + 1; j++)
+	    {
+	      alloc_buffer[0].alloc_entries[k].stack[j] = NULL;
+	    }
+	  memset(alloc_buffer[0].alloc_entries[k].cmd, '\0',
+		 sizeof (alloc_buffer[0].alloc_entries[k].cmd));
+          alloc_buffer[0].alloc_entries[k].type = TYPE_NONE;
+	}
+    }
+
+  alloc_buffer[i].addr = p;
+  alloc_buffer[i].serial = alloc_serial++;
+  alloc_buffer[i].allocs = 0;
+  alloc_buffer[i].frees = 0;
+  for (j = 0; j < MAX_STACK_FRAME_INDEX + 1; j++)
+    {
+      alloc_buffer[i].alloc_entries[0].stack[j] = NULL;
+    }
+  alloc_buffer[i].alloc_entries[0].type = TYPE_NONE;
+  alloc_buffer[i].alloc_entries[0].cmd[0] = '\0';
+
+  return i;
+}
+
+#endif
+
+char *dbg_cmdname = NULL;
+
 /* Allocate SIZE bytes with the alignment ALIGN and return the pointer.  */
 void *
 grub_memalign (grub_size_t align, grub_size_t size)
@@ -337,7 +499,22 @@ grub_memalign (grub_size_t align, grub_size_t size)
 
       p = grub_real_malloc (&(r->first), n, align);
       if (p)
-	return p;
+	{
+#ifndef GRUB_UTIL
+	  int i = get_buffer_index(p);
+	  int entry = alloc_buffer[i].alloc_entry;
+	  alloc_buffer[i].alloc_entries[entry].type = TYPE_ALLOC;
+	  write_stack(alloc_buffer[i].alloc_entries[entry].stack, 1);
+	  grub_strncpy(alloc_buffer[i].alloc_entries[entry].cmd,
+		       dbg_cmdname ? dbg_cmdname : "",
+		       sizeof (alloc_buffer[i].alloc_entries[entry].cmd) - 1);
+	  alloc_buffer[i].alloc_entries[entry].cmd[
+	    sizeof (alloc_buffer[i].alloc_entries[entry].cmd)-1] ='\0';
+	  alloc_buffer[i].allocs++;
+	  alloc_buffer[i].alloc_entry++;
+#endif
+	  return p;
+	}
     }
 
   /* If failed, increase free memory somehow.  */
@@ -386,6 +563,124 @@ grub_zalloc (grub_size_t size)
   return ret;
 }
 
+#ifndef GRUB_UTIL
+extern void *_start;
+
+static int
+priv_backtrace_print_address (void *addr, char *buf, grub_size_t size)
+{
+  grub_dl_t mod;
+
+  int ret = 0;
+  FOR_DL_MODULES (mod)
+    {
+      grub_dl_segment_t segment;
+      for (segment = mod->segment; segment; segment = segment->next)
+	if (segment->addr <= addr && (grub_uint8_t *) segment->addr
+	   + segment->size > (grub_uint8_t *) addr)
+	  {
+	    ret = grub_snprintf (buf, size, "%p (%s.%x+%" PRIxGRUB_SIZE ")\n",
+			 addr, mod->name, segment->section,
+			 (grub_size_t) ((grub_uint8_t *) addr
+					- (grub_uint8_t *) segment->addr));
+	    return ret;
+	  }
+    }
+
+  /* the end of this region is pretty hard to figure out right now, but
+     modules are all at a lower address, not a higher one, so unless we've
+     walked off kernel.exec entirely, this is reasonable.  If we have, we'll
+     see big numbers that make no sense in the output, but that should be a
+     pretty big giveaway when you try to look them up. */
+  if (addr >= (void *)&_start)
+    {
+      ret = grub_snprintf (buf, size, "%p (%s.%x+%" PRIxGRUB_SIZE ")\n",
+		  addr, "kernel", 1,
+		  (grub_size_t) ((grub_uint8_t *) addr
+				 - (grub_uint8_t *)&_start));
+      return ret;
+    }
+
+  ret = grub_snprintf (buf, size, "%p\n", addr);
+  return ret;
+}
+
+static void
+private_write(char *buf)
+{
+  grub_term_output_t term;
+  struct grub_unicode_glyph c =
+    {
+      .base = 0,
+      .variant = 0,
+      .attributes = 0,
+      .ncomb = 0,
+      .estimated_width = 1
+    };
+  int i;
+
+  for (i = 0; buf[i]; i++)
+    {
+      c.base = buf[i];
+      FOR_ACTIVE_TERM_OUTPUTS(term)
+	{
+	  if (buf[i] == '\n')
+	    {
+	      c.base = '\r';
+	      (*term->putchar)(term, &c);
+	      c.base = '\n';
+	    }
+	  (*term->putchar)(term, &c);
+	}
+    }
+}
+
+void
+print_stack(struct allocation *alloc, int maxallocs, int maxfrees)
+{
+  if (!is_in_normal)
+    return;
+
+  char msg[1024 + 1024 * ALLOC_DEPTH];
+  int offset = 0;
+  int j;
+
+  offset += grub_snprintf(msg, 80, "_start is %p\n", &_start) - 1;
+  offset += grub_snprintf(msg + offset, 80,
+	      "Free of %p (%" PRIuGRUB_UINT64_T ") "
+	      "has %d (%d max) allocs and %d frees (%d max)\n",
+	      alloc->addr, alloc->serial, alloc->allocs, maxallocs,
+	      alloc->frees, maxfrees);
+  msg[offset] = '\0';
+  for (j = alloc->alloc_entry - 1; j >= 0; j--)
+    {
+      unsigned int i;
+      offset += grub_snprintf(msg + offset, 80, "%s traceback (%s):\n",
+			      alloc->alloc_entries[j].type == TYPE_ALLOC
+			       ? "Alloc"
+			       : alloc->alloc_entries[j].type == TYPE_FREE
+			        ? "Free" : "None",
+			      alloc->alloc_entries[j].cmd[0]
+			       ? alloc->alloc_entries[j].cmd
+			       : "no command name set");
+      for (i = 0; alloc->alloc_entries[j].stack[i]
+	          &&  i < MAX_STACK_FRAME_INDEX; i++)
+	offset += priv_backtrace_print_address(alloc->alloc_entries[j].stack[i],
+					       msg + offset,
+					       sizeof (msg) - offset);
+      msg[offset] = '\0';
+    }
+
+  offset += grub_snprintf(msg+offset, 80, "End of traceback\n") - 1;
+  msg[offset] = '\0';
+
+  private_write(msg);
+  private_write((char *)"\n");
+  alloc->frees = 0;
+  alloc->allocs = 0;
+}
+#endif
+
 /* Deallocate the pointer PTR.  */
 void
 grub_free (void *ptr)
@@ -395,6 +690,40 @@ grub_free (void *ptr)
 
   if (! ptr)
     return;
+
+#ifndef GRUB_UTIL
+  int i = get_buffer_index(ptr);
+  int entry = alloc_buffer[i].alloc_entry;
+  alloc_buffer[i].alloc_entries[entry].type = TYPE_FREE;
+  write_stack(alloc_buffer[i].alloc_entries[entry].stack, 1);
+  grub_strncpy(alloc_buffer[i].alloc_entries[entry].cmd,
+	       dbg_cmdname ? dbg_cmdname : "",
+	       sizeof (alloc_buffer[i].alloc_entries[entry].cmd) - 1);
+  alloc_buffer[i].alloc_entries[entry].cmd[
+    sizeof (alloc_buffer[i].alloc_entries[entry].cmd)-1] ='\0';
+  alloc_buffer[i].frees++;
+  alloc_buffer[i].alloc_entry++;
+
+  if (alloc_buffer[i].frees > alloc_buffer[i].allocs)
+    {
+      int j;
+      int maxfrees = 0;
+      int maxallocs = 0;
+      for (j = 0; j < alloc_current; j++)
+	{
+	  if (alloc_buffer[j].frees > maxfrees)
+	    maxfrees = alloc_buffer[j].frees;
+	  if (alloc_buffer[j].allocs > maxallocs)
+	    maxallocs = alloc_buffer[j].allocs;
+	}
+
+      print_stack(&alloc_buffer[i], maxallocs, maxfrees);
+#if 0
+      grub_printf("(eliding bad free)\n");
+      return;
+#endif
+    }
+#endif
 
   get_header_from_pointer (ptr, &p, &r);
 

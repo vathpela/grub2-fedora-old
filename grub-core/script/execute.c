@@ -959,6 +959,8 @@ grub_script_execute_new_scope (const char *source, int argc, char **args)
   return ret;
 }
 
+extern char *dbg_cmdname;
+
 /* Execute a single command line.  */
 grub_err_t
 grub_script_execute_cmdline (struct grub_script_cmd *cmd)
@@ -981,12 +983,13 @@ grub_script_execute_cmdline (struct grub_script_cmd *cmd)
   invert = 0;
   argc = argv.argc - 1;
   args = argv.args + 1;
-  cmdname = argv.args[0];
+  dbg_cmdname = cmdname = argv.args[0];
   if (grub_strcmp (cmdname, "!") == 0)
     {
       if (argv.argc < 2 || ! argv.args[1])
 	{
 	  grub_script_argv_free (&argv);
+	  dbg_cmdname = NULL;
 	  return grub_error (GRUB_ERR_BAD_ARGUMENT,
 			     N_("no command is specified"));
 	}
@@ -994,7 +997,7 @@ grub_script_execute_cmdline (struct grub_script_cmd *cmd)
       invert = 1;
       argc = argv.argc - 2;
       args = argv.args + 2;
-      cmdname = argv.args[1];
+      dbg_cmdname = cmdname = argv.args[1];
     }
   grubcmd = grub_command_find (cmdname);
   if (! grubcmd)
@@ -1026,6 +1029,8 @@ grub_script_execute_cmdline (struct grub_script_cmd *cmd)
 
 	  grub_script_argv_free (&argv);
 	  grub_print_error ();
+
+	  dbg_cmdname = NULL;
 
 	  return 0;
 	}
@@ -1072,6 +1077,7 @@ grub_script_execute_cmdline (struct grub_script_cmd *cmd)
   grub_snprintf (errnobuf, sizeof (errnobuf), "%d", ret);
   grub_env_set ("?", errnobuf);
 
+  dbg_cmdname = NULL;
   return ret;
 }
 
