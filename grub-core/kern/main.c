@@ -222,6 +222,8 @@ grub_set_prefix_and_root (void)
 }
 
 /* Load the normal mode module and execute the normal mode if possible.  */
+int is_in_normal = 0;
+
 static void
 grub_load_normal_mode (void)
 {
@@ -232,6 +234,7 @@ grub_load_normal_mode (void)
   grub_print_error ();
   grub_errno = 0;
 
+  is_in_normal = 1;
   grub_command_execute ("normal", 0, 0);
 }
 
@@ -263,6 +266,7 @@ reclaim_module_space (void)
 void __attribute__ ((noreturn))
 grub_main (void)
 {
+  is_in_normal = 0;
   /* First of all, initialize the machine.  */
   grub_machine_init ();
 
