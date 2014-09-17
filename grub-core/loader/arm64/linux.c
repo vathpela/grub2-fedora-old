@@ -54,7 +54,7 @@ static grub_addr_t initrd_end;
 static void *loaded_fdt;
 static void *fdt;
 
-static void *
+void *
 get_firmware_fdt (void)
 {
   grub_efi_configuration_table_t *tables;
@@ -75,7 +75,7 @@ get_firmware_fdt (void)
   return firmware_fdt;
 }
 
-static void
+void
 get_fdt (void)
 {
   void *raw_fdt;
@@ -112,7 +112,7 @@ get_fdt (void)
     }
 }
 
-static grub_err_t
+grub_err_t
 check_kernel (struct grub_arm64_linux_kernel_header *lh)
 {
   if (lh->magic != GRUB_ARM64_LINUX_MAGIC)
@@ -130,7 +130,7 @@ check_kernel (struct grub_arm64_linux_kernel_header *lh)
   return GRUB_ERR_NONE;
 }
 
-static grub_err_t
+grub_err_t
 finalize_params (void)
 {
   grub_efi_boot_services_t *b;
@@ -181,7 +181,7 @@ failure:
   return grub_error(GRUB_ERR_BAD_OS, "failed to install/update FDT");
 }
 
-static grub_err_t
+grub_err_t
 grub_cmd_devicetree (grub_command_t cmd __attribute__ ((unused)),
 		     int argc, char *argv[])
 {
@@ -240,7 +240,7 @@ out:
   return grub_errno;
 }
 
-static grub_err_t
+grub_err_t
 grub_linux_boot (void)
 {
   grub_efi_memory_mapped_device_path_t *mempath;
@@ -304,7 +304,7 @@ grub_linux_boot (void)
   return grub_errno;
 }
 
-static grub_err_t
+grub_err_t
 grub_linux_unload (void)
 {
   grub_dl_unref (my_mod);
@@ -324,7 +324,7 @@ grub_linux_unload (void)
   return GRUB_ERR_NONE;
 }
 
-static grub_err_t
+grub_err_t
 grub_cmd_initrd (grub_command_t cmd __attribute__ ((unused)),
 		 int argc, char *argv[])
 {
@@ -376,7 +376,7 @@ grub_cmd_initrd (grub_command_t cmd __attribute__ ((unused)),
   return grub_errno;
 }
 
-static grub_err_t
+grub_err_t
 grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
 		int argc, char *argv[])
 {
