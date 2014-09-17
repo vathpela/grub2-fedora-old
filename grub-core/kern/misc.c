@@ -1353,8 +1353,10 @@ grub_fatal (const char *fmt, ...)
   va_end (ap);
 
 #ifndef GRUB_UTIL
+#if 0
   grub_printf ("\n");
   private_backtrace();
+#endif
 #endif
   grub_abort ();
 }
