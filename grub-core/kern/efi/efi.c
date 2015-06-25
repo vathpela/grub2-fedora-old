@@ -298,7 +298,7 @@ grub_efi_secure_boot (void)
 /* Search the mods section from the PE32/PE32+ image. This code uses
    a PE32 header, but should work with PE32+ as well.  */
 grub_addr_t
-grub_efi_modules_addr (void)
+grub_efi_section_addr (const char *section_name)
 {
   grub_efi_loaded_image_t *image;
   struct grub_pe32_header *header;
@@ -312,6 +312,7 @@ grub_efi_modules_addr (void)
   if (! image)
     return 0;
 
+
   header = image->image_base;
   coff_header = &(header->coff_header);
   sections
@@ -323,7 +324,7 @@ grub_efi_modules_addr (void)
        i < coff_header->num_sections;
        i++, section++)
     {
-      if (grub_strcmp (section->name, "mods") == 0)
+      if (grub_strcmp (section->name, section_name) == 0)
 	break;
     }
 
