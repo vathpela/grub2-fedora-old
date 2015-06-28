@@ -571,8 +571,8 @@ LDFLAGS="$TARGET_LDFLAGS"
 LIBS=""
 
 # debug flags.
-TARGET_CFLAGS="$TARGET_CFLAGS $WARN_FLAGS -g -Wredundant-decls -Wmissing-prototypes -Wmissing-declarations"
-TARGET_CCASFLAGS="$TARGET_CCASFLAGS -g"
+TARGET_CFLAGS="$TARGET_CFLAGS $WARN_FLAGS -g3 -Wredundant-decls -Wmissing-prototypes -Wmissing-declarations"
+TARGET_CCASFLAGS="$TARGET_CCASFLAGS -g3"
 
 if test "x$target_cpu" != xi386 && test "x$target_cpu" != xx86_64; then
 TARGET_CFLAGS="$TARGET_CFLAGS -Wcast-align"
@@ -931,21 +931,6 @@ if test x"$target_cpu" = xsparc64 ; then
   TARGET_LDFLAGS="$TARGET_LDFLAGS $grub_cv_target_cc_mno_relax"
 fi
 
-# By default, GCC 4.4 generates .eh_frame sections containing unwind
-# information in some cases where it previously did not. GRUB doesn't need
-# these and they just use up vital space. Restore the old compiler
-# behaviour.
-AC_CACHE_CHECK([whether -fno-dwarf2-cfi-asm works], [grub_cv_cc_fno_dwarf2_cfi_asm], [
-  CFLAGS="$TARGET_CFLAGS -fno-dwarf2-cfi-asm"
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-      [grub_cv_cc_fno_dwarf2_cfi_asm=yes],
-      [grub_cv_cc_fno_dwarf2_cfi_asm=no])
-])
-
-if test "x$grub_cv_cc_fno_dwarf2_cfi_asm" = xyes; then
-  TARGET_CFLAGS="$TARGET_CFLAGS -fno-dwarf2-cfi-asm"
-fi
-
 if test x"$target_os" = xcygwin; then
   AC_CACHE_CHECK([whether option -fno-reorder-functions works], grub_cv_cc_no_reorder_functions, [
     CFLAGS="$TARGET_CFLAGS -fno-reorder-functions"
@@ -970,36 +955,7 @@ if test "x$grub_cv_cc_mno_stack_arg_probe" = xyes; then
   TARGET_CFLAGS="$TARGET_CFLAGS -mno-stack-arg-probe"
 fi
 
-
-# By default, GCC 4.6 generates .eh_frame sections containing unwind
-# information in some cases where it previously did not. GRUB doesn't need
-# these and they just use up vital space. Restore the old compiler
-# behaviour.
-AC_CACHE_CHECK([whether -fno-asynchronous-unwind-tables works], [grub_cv_cc_fno_asynchronous_unwind_tables], [
-  CFLAGS="$TARGET_CFLAGS -fno-asynchronous-unwind-tables"
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-      [grub_cv_cc_fno_asynchronous_unwind_tables=yes],
-      [grub_cv_cc_fno_asynchronous_unwind_tables=no])
-])
-
-if test "x$grub_cv_cc_fno_asynchronous_unwind_tables" = xyes; then
-  TARGET_CFLAGS="$TARGET_CFLAGS -fno-asynchronous-unwind-tables"
-fi
-
-AC_CACHE_CHECK([whether -fno-unwind-tables works], [grub_cv_cc_fno_unwind_tables], [
-  CFLAGS="$TARGET_CFLAGS -fno-unwind-tables"
-  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
-      [grub_cv_cc_fno_unwind_tables=yes],
-      [grub_cv_cc_fno_unwind_tables=no])
-])
-
-if test "x$grub_cv_cc_fno_unwind_tables" = xyes; then
-  TARGET_CFLAGS="$TARGET_CFLAGS -fno-unwind-tables"
-fi
-
-
 CFLAGS="$TARGET_CFLAGS"
-
 
 if test x"$platform" = xemu ; then
   TARGET_OBJ2ELF=
