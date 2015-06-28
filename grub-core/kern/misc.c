@@ -179,6 +179,24 @@ grub_real_dprintf (const char *file, const int line, const char *condition,
     }
 }
 
+void
+grub_qdprintf (const char *condition, const char *fmt, ...)
+{
+  va_list args;
+  const char *debug = grub_env_get ("debug");
+
+  if (0 && ! debug)
+    return;
+
+  if (1 || grub_strword (debug, "all") || grub_strword (debug, condition))
+    {
+      va_start (args, fmt);
+      grub_vprintf (fmt, args);
+      va_end (args);
+      grub_refresh ();
+    }
+}
+
 #define PREALLOC_SIZE 255
 
 int
