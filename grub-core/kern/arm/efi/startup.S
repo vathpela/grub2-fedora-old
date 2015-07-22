@@ -20,7 +20,7 @@
 
 #include <grub/symbol.h>
 
-	.file 	"startup.S"
+	.file 	"grub-core/kern/arm/efi/startup.S"
 	.text
 	.arm
 FUNCTION(_start)

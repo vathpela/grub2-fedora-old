@@ -30,7 +30,7 @@
  *
  */
 
-        .file   "efiemu.S"
+        .file   "grub-core/efiemu/runtime/efiemu.S"
 	.text
 
 FUNCTION (efiemu_get_time)
