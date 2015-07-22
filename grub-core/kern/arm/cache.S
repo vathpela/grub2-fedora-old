@@ -18,7 +18,7 @@
 
 #include <grub/symbol.h>
 
-	.file	"cache.S"
+	.file	"grub-core/kern/arm/cache.S"
 	.text
 	.syntax	unified
 #if !defined (__thumb2__) || !defined (ARMV7)

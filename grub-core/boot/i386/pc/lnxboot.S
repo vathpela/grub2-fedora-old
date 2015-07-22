@@ -23,7 +23,7 @@
 #include <grub/machine/kernel.h>
 #include <multiboot.h>
 
-        .file   "lnxboot.S"
+        .file   "grub-core/boot/i386/pc/lnxboot.S"
 
 #define CODE_ADDR	0x6000
 #define CODE_SECTORS	1

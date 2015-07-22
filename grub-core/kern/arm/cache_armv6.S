@@ -18,7 +18,7 @@
 
 #include <grub/symbol.h>
 
-	.file	"cache_armv6.S"
+	.file	"grub-core/kern/arm/cache_armv6.S"
 	.text
 	.syntax	unified
 	.arm

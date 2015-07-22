@@ -32,7 +32,7 @@
  *
  */
 
-        .file   "callwrap.S"
+        .file   "grub-core/kern/x86_64/efi/callwrap.S"
         .text
 
 FUNCTION(efi_wrap_0)

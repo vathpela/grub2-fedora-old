@@ -18,7 +18,7 @@
 
 #include <grub/symbol.h>
 
-	.file	"cache_flush.S"
+	.file	"grub-core/kern/arm64/cache_flush.S"
 	.text
 
 /*
