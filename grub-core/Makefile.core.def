@@ -44,6 +44,18 @@ transform_data = {
   enable = powerpc_ieee1275;
 };
 
+library = {
+  name = kernel_noemu_nodist_symlist.a;
+  noemu_nodist = symlist.c;
+  ia64_efi_cflags = '-fno-builtin -fpic -minline-int-divide-max-throughput -g0';
+  x86_64_xen_cppflags	   = '$(CPPFLAGS_XEN) -g0';
+  i386_xen_cppflags	   = '$(CPPFLAGS_XEN) -g0';
+  mips_arc_cppflags = '-DGRUB_DECOMPRESSOR_LINK_ADDR=$(TARGET_DECOMPRESSOR_LINK_ADDR) -g0';
+  i386_qemu_cppflags     = '-DGRUB_BOOT_MACHINE_LINK_ADDR=$(GRUB_BOOT_MACHINE_LINK_ADDR) -g0';
+  emu_cflags = '$(CFLAGS_GNULIB) -g0';
+  emu_cppflags = '$(CPPFLAGS_GNULIB) -g0';
+};
+
 kernel = {
   name = kernel;
 
@@ -133,7 +145,7 @@ kernel = {
   noemu = kern/time.c;
   noemu = kern/generic/millisleep.c;
 
-  noemu_nodist = symlist.c;
+  ldadd = kernel_noemu_nodist_symlist.a;
 
   mips = kern/generic/rtc_get_time_ms.c;
 
@@ -350,6 +362,13 @@ program = {
   enable = emu;
 };
 
+library = {
+  name = emu_nodist_symlist.a;
+  emu_nodist = symlist.c;
+  cflags = '-g0';
+  cppflags = '-g0';
+};
+
 program = {
   name = grub-emu-lite;
 
@@ -357,6 +376,7 @@ program = {
   emu_nodist = symlist.c;
 
   ldadd = 'kernel.exec$(EXEEXT)';
+  ldadd = emu_nodist_symlist.a;
   ldadd = 'gnulib/libgnu.a $(LIBINTL) $(LIBUTIL) $(LIBSDL) $(LIBUSB) $(LIBPCIACCESS) $(LIBDEVMAPPER) $(LIBZFS) $(LIBNVPAIR) $(LIBGEOM)';
 
   enable = emu;
