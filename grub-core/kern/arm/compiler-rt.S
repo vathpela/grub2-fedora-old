@@ -19,7 +19,7 @@
 #include <grub/symbol.h>
 #include <grub/dl.h>
 
-	.file	"misc.S"
+	.file	"grub-core/kern/arm/compiler-rt.S"
 	.text
 	.syntax	unified
 #if !defined (__thumb2__)

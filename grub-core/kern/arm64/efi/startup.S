@@ -18,7 +18,7 @@
 
 #include <grub/symbol.h>
 
-	.file 	"startup.S"
+	.file 	"grub-core/kern/arm64/efi/startup.S"
 	.text
 FUNCTION(_start)
 	/*

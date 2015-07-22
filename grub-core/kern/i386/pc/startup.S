@@ -48,7 +48,7 @@
 #include <grub/i386/pc/memory.h>
 #endif
 
-	.file	"startup.S"
+	.file	"grub-core/kern/i386/pc/startup.S"
 
 	.text
 

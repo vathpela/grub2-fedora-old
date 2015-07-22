@@ -27,7 +27,7 @@
 
 #define MSG(x)	movw $x, %si; call LOCAL(message)
 
-	.file	"diskboot.S"
+	.file	"grub-core/boot/i386/pc/diskboot.S"
 
 	.text
 

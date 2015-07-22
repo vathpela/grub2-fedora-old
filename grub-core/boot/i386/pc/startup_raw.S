@@ -25,7 +25,7 @@
 
 #define ABS(x)	((x) - LOCAL (base) + GRUB_BOOT_MACHINE_KERNEL_ADDR + 0x200)
 
-	.file	"startup_raw.S"
+	.file	"grub-core/boot/i386/pc/startup_raw.S"
 
 	.text
 
