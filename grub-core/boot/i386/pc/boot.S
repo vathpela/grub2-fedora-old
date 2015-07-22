@@ -108,7 +108,7 @@ cylinder_start:
 	/* more space... */
 	.endm
 
-	.file	"boot.S"
+	.file	"grub-core/boot/i386/pc/boot.S"
 
 	.text
 

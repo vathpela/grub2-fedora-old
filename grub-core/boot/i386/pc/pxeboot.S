@@ -18,7 +18,7 @@
 
 #include <grub/machine/boot.h>
 
-	.file	"pxeboot.S"
+	.file	"grub-core/boot/i386/pc/pxeboot.S"
 	.text
 
 	/* Start with the prehistoric environment... */

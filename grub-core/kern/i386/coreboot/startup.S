@@ -31,7 +31,7 @@
  *       with "ret $N" where N is ((the number of arguments) - 3) * 4.
  */
 
-	.file	"startup.S"
+	.file	"grub-core/kern/i386/coreboot/startup.S"
 	.text
 	.globl	start, _start
 start:
