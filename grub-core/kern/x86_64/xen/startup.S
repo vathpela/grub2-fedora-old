@@ -20,7 +20,7 @@
 #include <config.h>
 #include <grub/symbol.h>
 
-        .file   "startup.S"
+        .file   "grub-core/kern/x86_64/xen/startup.S"
         .text
         .globl  start, _start
         .code64

@@ -22,7 +22,7 @@
 #include <grub/machine/kernel.h>
 #include <multiboot.h>
 
-        .file   "cdboot.S"
+        .file   "grub-core/boot/i386/pc/cdboot.S"
 
 #define CODE_ADDR	0x6000
 #define DATA_ADDR	((GRUB_BOOT_MACHINE_KERNEL_ADDR) + 0x200)
