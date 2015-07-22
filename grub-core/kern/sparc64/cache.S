@@ -19,7 +19,7 @@
 
 #include <grub/symbol.h>
 
-        .file   "cache.S"
+        .file   "grub-core/kern/sparc64/cache.S"
 
         .text
 

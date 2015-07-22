@@ -67,7 +67,7 @@
 #include <grub/symbol.h>
 #include <grub/dl.h>
 
-	.file	"setjmp.S"
+	.file	"grub-core/lib/ia64/setjmp.S"
 
 GRUB_MOD_LICENSE "GPLv2+"
 
