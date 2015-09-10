@@ -125,6 +125,20 @@ void grub_efi_close_protocol (grub_efi_handle_t protocol_handle,
   b = grub_efi_system_table->boot_services;
   efi_call_4 (b->close_protocol, protocol_handle, protocol,
 	      grub_efi_image_handle, parent_handle);
+
+grub_efi_status_t
+grub_efi_create_child (const grub_efi_service_binding_t *sb,
+		       grub_efi_handle_t *child)
+{
+  return efi_call_2 (sb->create_child, sb, child);
+}
+
+grub_efi_status_t
+grub_efi_destroy_child (const grub_efi_service_binding_t *sb,
+			grub_efi_handle_t *child)
+{
+  return efi_call_2 (sb->destroy_child, sb, child);
+
 }
 
 int

@@ -38,6 +38,12 @@ void *EXPORT_FUNC(grub_efi_open_protocol) (grub_efi_handle_t handle,
 void EXPORT_FUNC(grub_efi_close_protocol) (grub_efi_handle_t protocol_handle,
 					   grub_efi_guid_t *protocol,
 					   grub_efi_handle_t parent_handle);
+grub_efi_status_t
+EXPORT_FUNC (grub_efi_create_child) (const grub_efi_service_binding_t *sb,
+				     grub_efi_handle_t *child);
+grub_efi_status_t
+EXPORT_FUNC (grub_efi_destroy_child) (const grub_efi_service_binding_t *sb,
+				      grub_efi_handle_t *child);
 int EXPORT_FUNC(grub_efi_set_text_mode) (int on);
 void EXPORT_FUNC(grub_efi_stall) (grub_efi_uintn_t microseconds);
 void *

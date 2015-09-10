@@ -1581,6 +1581,67 @@ struct grub_efi_block_io_media
 };
 typedef struct grub_efi_block_io_media grub_efi_block_io_media_t;
 
+struct grub_efi_service_binding {
+    grub_efi_status_t (*create_child) (struct grub_efi_service_binding *this,
+				       grub_efi_handle_t *child);
+    grub_efi_status_t (*destroy_child) (struct grub_efi_service_binding *this,
+					grub_efi_handle_t *child);
+};
+
+typedef struct grub_efi_service_binding grub_efi_service_binding_t;
+
+struct grub_efi_arp_config_data {
+  grub_efi_uint16_t sw_addr_type;
+  grub_efi_uint8_t sw_addr_len;
+  void *station_addr;
+  grub_efi_uint32_t entry_timeout;
+  grub_efi_uint32_t retry_count;
+  grub_efi_uint32_t retry_timeout;
+};
+typedef struct grub_efi_arp_config_data grub_efi_arp_config_data_t;
+
+struct grub_efi_arp_find_data {
+  grub_efi_uint32_t size;
+  grub_efi_boolean_t deny_flag;
+  grub_efi_boolean_t static_flag;
+  grub_efi_uint16_t hw_addr_type;
+  grub_efi_uint16_t sw_addr_type;
+  grub_efi_uint8_t hw_addr_len;
+  grub_efi_uint8_t sw_addr_len;
+};
+typedef struct grub_efi_arp_find_data grub_efi_arp_find_data_t;
+
+struct grub_efi_arp
+{
+  grub_efi_status_t (*configure) (struct grub_efi_arp *this,
+				  grub_efi_arp_config_data_t *config_data);
+  grub_efi_status_t (*add) (struct grub_efi_arp *this,
+			    grub_efi_boolean_t deny_flag,
+			    void *target_sw_addr,
+			    void *target_hw_addr,
+			    grub_efi_uint32_t timeout_value,
+			    grub_efi_boolean_t overwrite);
+  grub_efi_status_t (*find) (struct grub_efi_arp *this,
+			     grub_efi_boolean_t by_sw_addr,
+			     void *addr_buf,
+			     grub_efi_uint32_t *entry_len,
+			     grub_efi_uint32_t *entry_count,
+			     grub_efi_arp_find_data_t **entries,
+			     grub_efi_boolean_t refresh);
+  grub_efi_status_t (*delete) (struct grub_efi_arp *this,
+			       grub_efi_boolean_t by_sw_addr,
+			       void *addr_buf);
+  grub_efi_status_t (*flush) (struct grub_efi_arp *this);
+  grub_efi_status_t (*request) (struct grub_efi_arp *this,
+				void *target_sw_addr,
+				grub_efi_event_t resolved_event,
+				void *target_hw_addr);
+  grub_efi_status_t (*cancel) (struct grub_efi_arp *this,
+			       void *target_sw_addr,
+			       grub_efi_event_t resolved_event);
+};
+typedef struct grub_efi_arp grub_efi_arp_t;
+
 typedef grub_uint8_t grub_efi_mac_t[32];
 
 struct grub_efi_simple_network_mode
