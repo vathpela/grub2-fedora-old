@@ -111,6 +111,8 @@ struct grub_net_slaac_mac_list
 
 struct grub_net_link_layer_entry;
 
+typedef struct grub_efi_net_info grub_efi_net_info_t;
+
 struct grub_net_card
 {
   struct grub_net_card *next;
@@ -135,12 +137,7 @@ struct grub_net_card
   union
   {
 #ifdef GRUB_MACHINE_EFI
-    struct
-    {
-      struct grub_efi_simple_network *efi_net;
-      grub_efi_handle_t efi_handle;
-      grub_size_t last_pkt_size;
-    };
+    grub_efi_net_info_t *efi_net_info;
 #endif
     void *data;
     int data_num;

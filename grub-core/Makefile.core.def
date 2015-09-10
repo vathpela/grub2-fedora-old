@@ -2194,6 +2194,8 @@ module = {
 module = {
   name = efinet;
   common = net/drivers/efi/efinet.c;
+  common = net/drivers/efi/efisnp.c;
+  common = net/drivers/efi/efimnp.c;
   enable = efi;
 };
 
