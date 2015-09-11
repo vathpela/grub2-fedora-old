@@ -99,6 +99,11 @@
     { 0x9a, 0x2d, 0x00, 0x90, 0x27, 0x3f, 0xc1, 0x4d } \
   }
 
+#define GRUB_EFI_MANAGED_NETWORK_GUID	\
+  { 0x7ab33a91, 0xace5, 0x4326, \
+    { 0xb5, 0x72, 0xe7, 0xee, 0x33, 0xd3, 0x9f, 0x16 } \
+  }
+
 #define GRUB_EFI_PXE_GUID	\
   { 0x03c4e603, 0xac28, 0x11d3, \
     { 0x9a, 0x2d, 0x00, 0x90, 0x27, 0x3f, 0xc1, 0x4d } \
@@ -332,6 +337,21 @@
 #define GRUB_EFI_VENDOR_APPLE_GUID \
   { 0x2B0585EB, 0xD8B8, 0x49A9,	\
       { 0x8B, 0x8C, 0xE2, 0x1B, 0x01, 0xAE, 0xF2, 0xB7 } \
+  }
+
+#define GRUB_EFI_ARP_PROTOCOL_GUID \
+  { 0xf4b427bb, 0xba21, 0x4f16, \
+      { 0xbc, 0x4e, 0x43, 0xe4, 0x16, 0xab, 0x61, 0x9c } \
+  }
+
+#define GRUB_EFI_MNP_SERVICE_BINDING_PROTOCOL_GUID \
+  { 0xf36ff770, 0xa7e1, 0x42cf, \
+      { 0x9e, 0xd2, 0x56, 0xf0, 0xf2,0x71,0xf4,0x4c } \
+  }
+
+#define GRUB_EFI_ARP_SERVICE_BINDING_PROTOCOL_GUID \
+  { 0xf44c00ee, 0x1f2c, 0x4a00, \
+      { 0xaa, 0x09, 0x1c, 0x9f, 0x3e, 0x08, 0x00, 0xa3 } \
   }
 
 struct grub_efi_sal_system_table
@@ -1589,6 +1609,13 @@ struct grub_efi_service_binding {
 };
 
 typedef struct grub_efi_service_binding grub_efi_service_binding_t;
+typedef grub_efi_service_binding_t grub_efi_managed_network_service_binding_t;
+typedef grub_efi_service_binding_t grub_efi_arp_service_binding_t;
+typedef grub_efi_service_binding_t grub_efi_ip4_service_binding_t;
+typedef grub_efi_service_binding_t grub_efi_tcp4_service_binding_t;
+typedef grub_efi_service_binding_t grub_efi_udp4_service_binding_t;
+typedef grub_efi_service_binding_t grub_efi_mtftp4_service_binding_t;
+typedef grub_efi_service_binding_t grub_efi_dhcp4_service_binding_t;
 
 struct grub_efi_arp_config_data {
   grub_efi_uint16_t sw_addr_type;
@@ -1666,6 +1693,7 @@ struct grub_efi_simple_network_mode
   grub_uint8_t media_present_supported;
   grub_uint8_t media_present;
 };
+typedef struct grub_efi_simple_network_mode grub_efi_simple_network_mode_t;
 
 enum
   {
@@ -1725,6 +1753,94 @@ struct grub_efi_simple_network
 };
 typedef struct grub_efi_simple_network grub_efi_simple_network_t;
 
+struct grub_efi_managed_network_config_data
+{
+  grub_efi_uint32_t received_queue_timeout;
+  grub_efi_uint32_t transmit_queue_timeout;
+  grub_efi_uint16_t protocol_type_filter;
+  grub_efi_boolean_t enable_unicast_receive;
+  grub_efi_boolean_t enable_multicast_receive;
+  grub_efi_boolean_t enable_broadcast_receive;
+  grub_efi_boolean_t enable_promiscuous_receive;
+  grub_efi_boolean_t flush_queues_on_reset;
+  grub_efi_boolean_t enable_receive_timestamps;
+  grub_efi_boolean_t disable_background_polling;
+};
+typedef struct grub_efi_managed_network_config_data grub_efi_managed_network_config_data_t;
+
+struct grub_efi_managed_network_receive_data
+{
+  grub_efi_time_t timestamp;
+  grub_efi_event_t recycle_event;
+  grub_efi_uint32_t packet_len;
+  grub_efi_uint32_t header_len;
+  grub_efi_uint32_t addr_len;
+  grub_efi_uint32_t data_len;
+  grub_efi_boolean_t broadcast;
+  grub_efi_boolean_t multicast;
+  grub_efi_boolean_t promiscuous;
+  grub_efi_uint16_t protocol_type;
+  void *destination_addr;
+  void *source_addr;
+  void *media_header;
+  void *packet_data;
+};
+typedef struct grub_efi_managed_network_receive_data grub_efi_managed_network_receive_data_t;
+
+struct grub_efi_managed_network_fragment_data
+{
+  grub_efi_uint32_t fragment_len;
+  void *fragment_buf;
+};
+typedef struct grub_efi_managed_network_fragment_data grub_efi_managed_network_fragment_data_t;
+
+struct grub_efi_managed_network_transmit_data
+{
+  grub_efi_mac_address_t *destination_addr;
+  grub_efi_mac_address_t *source_addr;
+  grub_efi_uint16_t protocol_type;
+  grub_efi_uint32_t data_len;
+  grub_efi_uint16_t header_len;
+  grub_efi_uint16_t fragment_count;
+  grub_efi_managed_network_fragment_data_t fragment_table[1];
+};
+typedef struct grub_efi_managed_network_transmit_data grub_efi_managed_network_transmit_data_t;
+
+struct grub_efi_managed_network_completion_token
+{
+  grub_efi_event_t event;
+  grub_efi_status_t status;
+  union
+    {
+      grub_efi_managed_network_receive_data_t *rx_data;
+      grub_efi_managed_network_transmit_data_t *tx_data;
+    } packet;
+};
+typedef struct grub_efi_managed_network_completion_token grub_efi_managed_network_completion_token_t;
+
+struct grub_efi_managed_network
+{
+  grub_efi_status_t (*get_mode_data) (struct grub_efi_managed_network *this,
+		      grub_efi_managed_network_config_data_t *mnp_config_data,
+		      grub_efi_simple_network_mode_t *snp_mode_data);
+  grub_efi_status_t (*configure) (struct grub_efi_managed_network *this,
+		      grub_efi_managed_network_config_data_t *mnp_config_data);
+  grub_efi_status_t (*mcast_ip_to_mac) (struct grub_efi_managed_network *this,
+					grub_efi_boolean_t ipv6,
+					grub_efi_ip_address_t ip_addr,
+					grub_efi_mac_address_t mac_addr);
+  grub_efi_status_t (*groups) (struct grub_efi_managed_network *this,
+			       grub_efi_boolean_t join,
+			       grub_efi_mac_address_t *mac_addr);
+  grub_efi_status_t (*transmit) (struct grub_efi_managed_network *this,
+			  grub_efi_managed_network_completion_token_t *token);
+  grub_efi_status_t (*receive) (struct grub_efi_managed_network *this,
+			  grub_efi_managed_network_completion_token_t *token);
+  grub_efi_status_t (*cancel) (struct grub_efi_managed_network *this,
+			  grub_efi_managed_network_completion_token_t *token);
+  grub_efi_status_t (*poll) (struct grub_efi_managed_network *this);
+};
+typedef struct grub_efi_managed_network grub_efi_managed_network_t;
 
 struct grub_efi_block_io
 {
