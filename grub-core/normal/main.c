@@ -419,6 +419,8 @@ grub_normal_reader_init (int nested)
   const char *msg_esc = _("ESC at any time exits.");
   char *msg_formatted;
 
+  return 0;
+
   msg_formatted = grub_xasprintf (_("Minimal BASH-like line editing is supported. For "
 				    "the first word, TAB lists possible command completions. Anywhere "
 				    "else TAB lists possible device or file completions. %s"),
