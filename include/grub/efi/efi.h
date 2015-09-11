@@ -35,6 +35,9 @@ EXPORT_FUNC(grub_efi_locate_handle) (grub_efi_locate_search_type_t search_type,
 void *EXPORT_FUNC(grub_efi_open_protocol) (grub_efi_handle_t handle,
 					   grub_efi_guid_t *protocol,
 					   grub_efi_uint32_t attributes);
+void EXPORT_FUNC(grub_efi_close_protocol) (grub_efi_handle_t protocol_handle,
+					   grub_efi_guid_t *protocol,
+					   grub_efi_handle_t parent_handle);
 int EXPORT_FUNC(grub_efi_set_text_mode) (int on);
 void EXPORT_FUNC(grub_efi_stall) (grub_efi_uintn_t microseconds);
 void *

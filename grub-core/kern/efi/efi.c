@@ -117,6 +117,16 @@ grub_efi_open_protocol (grub_efi_handle_t handle,
   return interface;
 }
 
+void grub_efi_close_protocol (grub_efi_handle_t protocol_handle,
+			      grub_efi_guid_t *protocol,
+			      grub_efi_handle_t parent_handle)
+{
+  grub_efi_boot_services_t *b;
+  b = grub_efi_system_table->boot_services;
+  efi_call_4 (b->close_protocol, protocol_handle, protocol,
+	      grub_efi_image_handle, parent_handle);
+}
+
 int
 grub_efi_set_text_mode (int on)
 {
