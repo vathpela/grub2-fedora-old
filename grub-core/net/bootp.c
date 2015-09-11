@@ -236,6 +236,7 @@ grub_net_configure_by_dhcp_ack (const char *name,
   hwaddr.type = GRUB_NET_LINK_LEVEL_PROTOCOL_ETHERNET;
 
   inter = grub_net_add_addr (name, card, &addr, &hwaddr, flags);
+  grub_printf("added addr\n");
 #if 0
   /* This is likely based on misunderstanding. gateway_ip refers to
      address of BOOTP relay and should not be used after BOOTP transaction

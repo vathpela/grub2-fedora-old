@@ -67,6 +67,11 @@ grub_net_arp_send_request (struct grub_net_network_level_interface *inf,
   if (proto_addr->type != GRUB_NET_NETWORK_LEVEL_PROTOCOL_IPV4)
     return grub_error (GRUB_ERR_BUG, "unsupported address family");
 
+  grub_printf("sending arp request for %d.%d.%d.%d\n",
+	      (proto_addr->ipv4 & 0xff),
+	      (proto_addr->ipv4 & 0xff00) >> 8,
+	      (proto_addr->ipv4 & 0xff0000) >> 16,
+	      (proto_addr->ipv4 & 0xff000000) >> 24);
   /* Build a request packet.  */
   nb.head = arp_data;
   nb.end = arp_data + sizeof (arp_data);
@@ -124,6 +129,13 @@ grub_net_arp_receive (struct grub_net_buff *nb,
       || nb->tail - nb->data < (int) sizeof (*arp_packet))
     return GRUB_ERR_NONE;
 
+  grub_printf("recieved arp %d for %d.%d.%d.%d\n",
+	      arp_header->op,
+	      (*target_protocol_address & 0xff),
+	      (*target_protocol_address & 0xff00) >> 8,
+	      (*target_protocol_address & 0xff0000) >> 16,
+	      (*target_protocol_address & 0xff000000) >> 24);
+
   sender_addr.type = GRUB_NET_NETWORK_LEVEL_PROTOCOL_IPV4;
   target_addr.type = GRUB_NET_NETWORK_LEVEL_PROTOCOL_IPV4;
   sender_addr.ipv4 = arp_packet->sender_ip;
@@ -134,7 +146,9 @@ grub_net_arp_receive (struct grub_net_buff *nb,
   sender_mac_addr.type = GRUB_NET_LINK_LEVEL_PROTOCOL_ETHERNET;
   grub_memcpy (sender_mac_addr.mac, arp_packet->sender_mac,
 	       sizeof (sender_mac_addr.mac));
+  grub_printf("adding link layer address...\n");
   grub_net_link_layer_add_address (card, &sender_addr, &sender_mac_addr, 1);
+  grub_printf("sending replies...\n");
 
   FOR_NET_NETWORK_LEVEL_INTERFACES (inf)
   {
@@ -180,6 +194,8 @@ grub_net_arp_receive (struct grub_net_buff *nb,
 	grub_memcpy (arp_reply->recv_mac, arp_packet->sender_mac, 6);
 
 	/* Change operation to REPLY and send packet */
+	arp_header->op = grub_be_to_cpu16 (ARP_REPLY);
+	grub_printf("sending arp reply\n");
 	send_ethernet_packet (inf, &nb_reply, target, GRUB_NET_ETHERTYPE_ARP);
       }
   }
