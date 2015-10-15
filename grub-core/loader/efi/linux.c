@@ -41,13 +41,12 @@ grub_linuxefi_secure_validate (void *data, grub_uint32_t size)
 
   shim_lock = grub_efi_locate_protocol(&guid, NULL);
 
-  if (!shim_lock)
-    return 1;
+  if (!shim_lock || shim_lock->verify(data, size) != GRUB_EFI_SUCCESS) {
+    /* The SHIM_LOCK protocol is missing or verification failed. */
+    return 0;
+  }
 
-  if (shim_lock->verify(data, size) == GRUB_EFI_SUCCESS)
-    return 1;
-
-  return 0;
+  return 1;
 }
 
 typedef void (*handover_func) (void *, grub_efi_system_table_t *, void *);
