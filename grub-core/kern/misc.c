@@ -1116,7 +1116,7 @@ grub_fatal (const char *fmt, ...)
   va_end (ap);
 
   grub_refresh ();
-
+  grub_backtrace();
   grub_abort ();
 }
 
