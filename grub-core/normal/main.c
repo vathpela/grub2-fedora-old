@@ -204,9 +204,9 @@ void
 grub_normal_init_page (struct grub_term_output *term,
 		       int y __attribute__((__unused__)))
 {
+#if 0
   grub_term_cls (term);
 
-#if 0
   grub_ssize_t msg_len;
   int posx;
   char *msg_formatted;
@@ -415,6 +415,7 @@ grub_cmd_normal_exit (struct grub_command *cmd __attribute__ ((unused)),
 static grub_err_t
 grub_normal_reader_init (int nested)
 {
+#if 0
   struct grub_term_output *term;
   const char *msg_esc = _("ESC at any time exits.");
   char *msg_formatted;
@@ -440,7 +441,7 @@ grub_normal_reader_init (int nested)
     grub_putcode ('\n', term);
   }
   grub_free (msg_formatted);
- 
+#endif 
   return 0;
 }
 
