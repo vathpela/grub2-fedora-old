@@ -61,13 +61,17 @@ grub_linuxefi_unload (void)
   grub_dl_unref (my_mod);
   loaded = 0;
   if (initrd_mem)
-    grub_efi_free_pages((grub_efi_physical_address_t)initrd_mem, BYTES_TO_PAGES(params->ramdisk_size));
+    grub_efi_free_pages ((grub_efi_physical_address_t)initrd_mem,
+			 BYTES_TO_PAGES(params->ramdisk_size));
   if (linux_cmdline)
-    grub_efi_free_pages((grub_efi_physical_address_t)linux_cmdline, BYTES_TO_PAGES(params->cmdline_size + 1));
+    grub_efi_free_pages ((grub_efi_physical_address_t)linux_cmdline,
+			 BYTES_TO_PAGES(params->cmdline_size + 1));
   if (kernel_mem)
-    grub_efi_free_pages((grub_efi_physical_address_t)kernel_mem, BYTES_TO_PAGES(kernel_size));
+    grub_efi_free_pages ((grub_efi_physical_address_t)kernel_mem,
+			 BYTES_TO_PAGES(kernel_size));
   if (params)
-    grub_efi_free_pages((grub_efi_physical_address_t)params, BYTES_TO_PAGES(16384));
+    grub_efi_free_pages ((grub_efi_physical_address_t)params,
+			 BYTES_TO_PAGES(16384));
   return GRUB_ERR_NONE;
 }
 
@@ -82,13 +86,14 @@ grub_cmd_initrd (grub_command_t cmd __attribute__ ((unused)),
 
   if (argc == 0)
     {
-      grub_error (GRUB_ERR_BAD_ARGUMENT, N_("filename expected"));
+      grub_errno = grub_error (GRUB_ERR_BAD_ARGUMENT, N_("filename expected"));
       goto fail;
     }
 
   if (!loaded)
     {
-      grub_error (GRUB_ERR_BAD_ARGUMENT, N_("you need to load the kernel first"));
+      grub_error (GRUB_ERR_BAD_ARGUMENT,
+		  N_("you need to load the kernel first"));
       goto fail;
     }
 
@@ -107,10 +112,10 @@ grub_cmd_initrd (grub_command_t cmd __attribute__ ((unused)),
     }
 
   initrd_mem = grub_efi_allocate_pages_max (0x3fffffff, BYTES_TO_PAGES(size));
-
   if (!initrd_mem)
     {
-      grub_error (GRUB_ERR_OUT_OF_MEMORY, N_("can't allocate initrd"));
+      grub_errno = grub_error (GRUB_ERR_OUT_OF_MEMORY,
+			       N_("can't allocate initrd"));
       goto fail;
     }
 
@@ -125,7 +130,8 @@ grub_cmd_initrd (grub_command_t cmd __attribute__ ((unused)),
       if (grub_file_read (files[i], ptr, cursize) != cursize)
         {
           if (!grub_errno)
-            grub_error (GRUB_ERR_FILE_READ_ERROR, N_("premature end of file %s"),
+            grub_error (GRUB_ERR_FILE_READ_ERROR,
+			N_("premature end of file %s"),
                         argv[i]);
           goto fail;
         }
@@ -136,13 +142,14 @@ grub_cmd_initrd (grub_command_t cmd __attribute__ ((unused)),
 
   params->ramdisk_size = size;
 
- fail:
+fail:
   for (i = 0; i < nfiles; i++)
     grub_file_close (files[i]);
   grub_free (files);
 
   if (initrd_mem && grub_errno)
-    grub_efi_free_pages((grub_efi_physical_address_t)initrd_mem, BYTES_TO_PAGES(size));
+    grub_efi_free_pages ((grub_efi_physical_address_t)initrd_mem,
+			 BYTES_TO_PAGES(size));
 
   return grub_errno;
 }
@@ -174,25 +181,29 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
 
   if (!kernel)
     {
-      grub_error (GRUB_ERR_OUT_OF_MEMORY, N_("cannot allocate kernel buffer"));
+      grub_errno = grub_error (GRUB_ERR_OUT_OF_MEMORY,
+			       N_("cannot allocate kernel buffer"));
       goto fail;
     }
 
   if (grub_file_read (file, kernel, filelen) != filelen)
     {
-      grub_error (GRUB_ERR_FILE_READ_ERROR, N_("Can't read kernel %s"), argv[0]);
+      grub_error (GRUB_ERR_FILE_READ_ERROR, N_("Can't read kernel %s"),
+		  argv[0]);
       goto fail;
     }
 
   if (! grub_linuxefi_secure_validate (kernel, filelen))
     {
-      grub_error (GRUB_ERR_INVALID_COMMAND, N_("%s has invalid signature"), argv[0]);
+      grub_error (GRUB_ERR_INVALID_COMMAND, N_("%s has invalid signature"),
+		  argv[0]);
       grub_free (kernel);
       goto fail;
     }
 
   params = grub_efi_allocate_pages_max (0x3fffffff, BYTES_TO_PAGES(16384));
-
+  if (! params)
+    params = grub_efi_allocate_pages_max (0, BYTES_TO_PAGES(16384));
   if (! params)
     {
       grub_error (GRUB_ERR_OUT_OF_MEMORY, "cannot allocate kernel parameters");
@@ -205,34 +216,38 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
 
   if (lh.boot_flag != grub_cpu_to_le16 (0xaa55))
     {
-      grub_error (GRUB_ERR_BAD_OS, N_("invalid magic number"));
+      grub_errno = grub_error (GRUB_ERR_BAD_OS, N_("invalid magic number"));
       goto fail;
     }
 
   if (lh.setup_sects > GRUB_LINUX_MAX_SETUP_SECTS)
     {
-      grub_error (GRUB_ERR_BAD_OS, N_("too many setup sectors"));
+      grub_errno = grub_error (GRUB_ERR_BAD_OS, N_("too many setup sectors"));
       goto fail;
     }
 
   if (lh.version < grub_cpu_to_le16 (0x020b))
     {
-      grub_error (GRUB_ERR_BAD_OS, N_("kernel too old"));
+      grub_errno = grub_error (GRUB_ERR_BAD_OS, N_("kernel too old"));
       goto fail;
     }
 
   if (!lh.handover_offset)
     {
-      grub_error (GRUB_ERR_BAD_OS, N_("kernel doesn't support EFI handover"));
+      grub_errno = grub_error (GRUB_ERR_BAD_OS,
+			       N_("kernel doesn't support EFI handover"));
       goto fail;
     }
 
   linux_cmdline = grub_efi_allocate_pages_max(0x3fffffff,
 					 BYTES_TO_PAGES(lh.cmdline_size + 1));
-
+  if (!linux_cmdline)
+      linux_cmdline = grub_efi_allocate_pages(0,
+					  BYTES_TO_PAGES(lh.cmdline_size + 1));
   if (!linux_cmdline)
     {
-      grub_error (GRUB_ERR_OUT_OF_MEMORY, N_("can't allocate cmdline"));
+      grub_errno = grub_error (GRUB_ERR_OUT_OF_MEMORY,
+			       N_("can't allocate cmdline"));
       goto fail;
     }
 
@@ -250,14 +265,13 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
 
   kernel_mem = grub_efi_allocate_pages(lh.pref_address,
 				       BYTES_TO_PAGES(lh.init_size));
-
   if (!kernel_mem)
     kernel_mem = grub_efi_allocate_pages_max(0x3fffffff,
 					     BYTES_TO_PAGES(lh.init_size));
-
   if (!kernel_mem)
     {
-      grub_error (GRUB_ERR_OUT_OF_MEMORY, N_("can't allocate kernel"));
+      grub_errno = grub_error (GRUB_ERR_OUT_OF_MEMORY,
+			       N_("can't allocate kernel"));
       goto fail;
     }
 
@@ -270,8 +284,7 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
 
   params->type_of_loader = 0x21;
 
- fail:
-
+fail:
   if (file)
     grub_file_close (file);
 
@@ -285,13 +298,16 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
     }
 
   if (linux_cmdline && !loaded)
-    grub_efi_free_pages((grub_efi_physical_address_t)linux_cmdline, BYTES_TO_PAGES(lh.cmdline_size + 1));
+    grub_efi_free_pages ((grub_efi_physical_address_t)linux_cmdline,
+			 BYTES_TO_PAGES(lh.cmdline_size + 1));
 
   if (kernel_mem && !loaded)
-    grub_efi_free_pages((grub_efi_physical_address_t)kernel_mem, BYTES_TO_PAGES(kernel_size));
+    grub_efi_free_pages ((grub_efi_physical_address_t)kernel_mem,
+			 BYTES_TO_PAGES(kernel_size));
 
   if (params && !loaded)
-    grub_efi_free_pages((grub_efi_physical_address_t)params, BYTES_TO_PAGES(16384));
+    grub_efi_free_pages ((grub_efi_physical_address_t)params,
+			 BYTES_TO_PAGES(16384));
 
   return grub_errno;
 }
