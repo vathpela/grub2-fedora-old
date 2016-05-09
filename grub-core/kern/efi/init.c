@@ -59,7 +59,7 @@ grub_efi_env_init (void)
   grub_free (envblk_s.buf);
 }
 
-static void
+void
 grub_efi_print_gdb_info (void)
 {
   grub_addr_t text;
@@ -67,9 +67,14 @@ grub_efi_print_gdb_info (void)
 
   text = grub_efi_section_addr (".text");
   if (!text)
-    return;
+    {
+      grub_dprintf("sections", "could not find section .text\n");
+      return;
+    }
 
   data = grub_efi_section_addr (".data");
+  if (!data)
+    grub_dprintf("sections", "could not find section .data\n");
   if (data)
     grub_qdprintf ("gdb",
 		  "add-symbol-file /usr/lib/debug/usr/lib/grub/%s-%s/"
