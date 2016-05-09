@@ -284,6 +284,8 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
 
   params->type_of_loader = 0x21;
 
+  grub_printf("kernel_mem: %p handover_offset: %08x\n", kernel_mem, handover_offset);
+
 fail:
   if (file)
     grub_file_close (file);
