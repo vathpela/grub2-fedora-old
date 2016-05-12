@@ -11,8 +11,11 @@ grub_tpm_measure (unsigned char *buf, grub_size_t size, grub_uint8_t pcr,
 {
   grub_err_t ret;
   char *desc = grub_xasprintf("%s %s", kind, description);
-  if (!desc)
-    return GRUB_ERR_OUT_OF_MEMORY;
+  if (!desc) {
+    if (!grub_errno)
+      return grub_error (GRUB_ERR_OUT_OF_MEMORY, N_("out of memory"));
+    return grub_errno;
+  }
   ret = grub_tpm_log_event(buf, size, pcr, desc);
   grub_free(desc);
   return ret;

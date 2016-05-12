@@ -17,6 +17,9 @@ static grub_efi_boolean_t grub_tpm_present(grub_efi_tpm_protocol_t *tpm)
   grub_uint32_t flags;
   grub_efi_physical_address_t eventlog, lastevent;
 
+  if (!tpm)
+    return 0;
+
   caps.Size = (grub_uint8_t)sizeof(caps);
 
   status = efi_call_5(tpm->status_check, tpm, &caps, &flags, &eventlog,
@@ -33,6 +36,9 @@ static grub_efi_boolean_t grub_tpm2_present(grub_efi_tpm2_protocol_t *tpm)
 {
   grub_efi_status_t status;
   EFI_TCG2_BOOT_SERVICE_CAPABILITY caps;
+
+  if (!tpm)
+    return 0;
 
   caps.Size = (grub_uint8_t)sizeof(caps);
 
@@ -148,7 +154,7 @@ grub_tpm_execute(PassThroughToTPM_InputParamBlock *inbuf,
 		 PassThroughToTPM_OutputParamBlock *outbuf)
 {
   grub_efi_handle_t tpm_handle;
-   grub_uint8_t protocol_version;
+  grub_uint8_t protocol_version;
 
   /* It's not a hard failure for there to be no TPM */
   if (!grub_tpm_handle_find(&tpm_handle, &protocol_version))
