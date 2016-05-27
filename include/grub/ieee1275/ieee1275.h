@@ -78,7 +78,7 @@ extern void (*EXPORT_VAR(grub_ieee1275_net_config)) (const char *dev,
 extern grub_ieee1275_phandle_t EXPORT_VAR(grub_ieee1275_chosen);
 extern grub_ieee1275_ihandle_t EXPORT_VAR(grub_ieee1275_mmu);
 #ifdef __i386__
-#define GRUB_IEEE1275_ENTRY_FN_ATTRIBUTE  __attribute__ ((regparm(3)))
+#define GRUB_IEEE1275_ENTRY_FN_ATTRIBUTE  __attribute__ ((regparm(4)))
 #else
 #define GRUB_IEEE1275_ENTRY_FN_ATTRIBUTE
 #endif

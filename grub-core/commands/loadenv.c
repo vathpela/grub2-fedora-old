@@ -332,14 +332,16 @@ write_blocklists (grub_envblk_t envblk, struct blocklist *blocklists,
   buf = grub_envblk_buffer (envblk);
   disk = file->device->disk;
   part_start = grub_partition_get_start (disk->partition);
+  grub_printf("DEBUGGING: I entered write_blocklists\n");
 
   index = 0;
   for (p = blocklists; p; index += p->length, p = p->next)
     {
-      if (grub_disk_write (disk, p->sector - part_start,
-                           p->offset, p->length, buf + index))
+      grub_printf("disk: %s\np->sector: %d\npart_start: %d\np->offset: %d\np->length: %d\nbuf: %d\nindex: %d\n", disk->name, p->sector, part_start, p->offset, p->length, buf, index);
+      if (grub_disk_write (disk, p->sector - part_start, p->offset, p->length, buf + index))
         return 0;
     }
+  grub_dprintf("disk", "Got past the for loop in write_blocklists...");
 
   return 1;
 }
@@ -378,6 +380,7 @@ save_env_read_hook (grub_disk_addr_t sector, unsigned offset, unsigned length,
 static grub_err_t
 grub_cmd_save_env (grub_extcmd_context_t ctxt, int argc, char **args)
 {
+  int capture_value;
   struct grub_arg_list *state = ctxt->state;
   grub_file_t file;
   grub_envblk_t envblk;
@@ -430,7 +433,8 @@ grub_cmd_save_env (grub_extcmd_context_t ctxt, int argc, char **args)
       args++;
     }
 
-  write_blocklists (envblk, ctx.head, file);
+  capture_value = write_blocklists (envblk, ctx.head, file);
+  grub_printf("grubenv file write_blocklists - return code was %d\n", capture_value);
 
  fail:
   if (envblk)

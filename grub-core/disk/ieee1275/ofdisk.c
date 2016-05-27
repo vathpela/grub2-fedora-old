@@ -368,6 +368,62 @@ compute_dev_path (const char *name)
 }
 
 static grub_err_t
+grub_ofdisk_prepare (grub_disk_t disk, grub_disk_addr_t sector)
+{
+  grub_ssize_t status;
+  unsigned long long pos;
+
+  if (disk->data != last_devpath)
+    {
+      if (last_ihandle)
+	grub_ieee1275_close (last_ihandle);
+      last_ihandle = 0;
+      last_devpath = NULL;
+
+      grub_ieee1275_open (disk->data, &last_ihandle);
+      if (! last_ihandle)
+	return grub_error (GRUB_ERR_UNKNOWN_DEVICE, "can't open device");
+      last_devpath = disk->data;      
+    }
+
+  pos = sector << disk->log_sector_size;
+
+  grub_ieee1275_seek (last_ihandle, pos, &status);
+  if (status < 0)
+    return grub_error (GRUB_ERR_READ_ERROR,
+		       "seek error, can't seek block %llu",
+		       (long long) sector);
+  return 0;
+}
+
+static grub_err_t
+grub_ofdisk_write (grub_disk_t disk, grub_disk_addr_t sector,
+		   grub_size_t size, const char *buf)
+{
+  grub_err_t err;
+  grub_ssize_t actual;
+
+  grub_dprintf("disk", "Loading into grub_ofdisk_write...\n");
+  err = grub_ofdisk_prepare (disk, sector);
+  if (err)
+    return err;
+  grub_dprintf("disk", "Successfully ran grub_ofdisk_prepare...\n");
+  grub_ieee1275_write (last_ihandle, buf, size  << disk->log_sector_size,
+		       &actual);
+  grub_dprintf("disk", "actual: %d\ncompared_to: %d", actual, (grub_ssize_t) (size << disk->log_sector_size));
+  if (actual != (grub_ssize_t) (size << disk->log_sector_size))
+  {
+          grub_dprintf("disk", "OH NOES failure writing sector 0x%llx to `%s'\n", (unsigned long long) sector, disk->name);
+    return grub_error (GRUB_ERR_WRITE_ERROR, "OH NOES failure writing sector 0x%llx "
+						"to `%s'",
+		       (unsigned long long) sector,
+		       disk->name);
+  }
+
+  return 0;
+}
+
+static grub_err_t
 grub_ofdisk_open (const char *name, grub_disk_t disk)
 {
   grub_ieee1275_phandle_t dev;
@@ -383,7 +439,8 @@ grub_ofdisk_open (const char *name, grub_disk_t disk)
   if (! devpath)
     return grub_errno;
 
-  grub_dprintf ("disk", "Opening `%s'.\n", devpath);
+  grub_dprintf ("disk", "DERP DERP DERP Opening `%s'.\n", devpath);
+  grub_dprintf ("disk", "grub_ofdisk_write: %08llx\n", grub_ofdisk_write);
 
   if (grub_ieee1275_finddevice (devpath, &dev))
     {
@@ -448,35 +505,6 @@ grub_ofdisk_close (grub_disk_t disk)
 }
 
 static grub_err_t
-grub_ofdisk_prepare (grub_disk_t disk, grub_disk_addr_t sector)
-{
-  grub_ssize_t status;
-  unsigned long long pos;
-
-  if (disk->data != last_devpath)
-    {
-      if (last_ihandle)
-	grub_ieee1275_close (last_ihandle);
-      last_ihandle = 0;
-      last_devpath = NULL;
-
-      grub_ieee1275_open (disk->data, &last_ihandle);
-      if (! last_ihandle)
-	return grub_error (GRUB_ERR_UNKNOWN_DEVICE, "can't open device");
-      last_devpath = disk->data;      
-    }
-
-  pos = sector << disk->log_sector_size;
-
-  grub_ieee1275_seek (last_ihandle, pos, &status);
-  if (status < 0)
-    return grub_error (GRUB_ERR_READ_ERROR,
-		       "seek error, can't seek block %llu",
-		       (long long) sector);
-  return 0;
-}
-
-static grub_err_t
 grub_ofdisk_read (grub_disk_t disk, grub_disk_addr_t sector,
 		  grub_size_t size, char *buf)
 {
@@ -490,26 +518,6 @@ grub_ofdisk_read (grub_disk_t disk, grub_disk_addr_t sector,
   if (actual != (grub_ssize_t) (size  << disk->log_sector_size))
     return grub_error (GRUB_ERR_READ_ERROR, N_("failure reading sector 0x%llx "
 					       "from `%s'"),
-		       (unsigned long long) sector,
-		       disk->name);
-
-  return 0;
-}
-
-static grub_err_t
-grub_ofdisk_write (grub_disk_t disk, grub_disk_addr_t sector,
-		   grub_size_t size, const char *buf)
-{
-  grub_err_t err;
-  grub_ssize_t actual;
-  err = grub_ofdisk_prepare (disk, sector);
-  if (err)
-    return err;
-  grub_ieee1275_write (last_ihandle, buf, size  << disk->log_sector_size,
-		       &actual);
-  if (actual != (grub_ssize_t) (size << disk->log_sector_size))
-    return grub_error (GRUB_ERR_WRITE_ERROR, N_("failure writing sector 0x%llx "
-						"to `%s'"),
 		       (unsigned long long) sector,
 		       disk->name);
 

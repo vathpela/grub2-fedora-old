@@ -281,10 +281,16 @@ grub_arcdisk_write (grub_disk_t disk, grub_disk_addr_t sector,
     {
       if (GRUB_ARC_FIRMWARE_VECTOR->write (last_handle, buf,
 					   totl, &count))
-	return grub_error (GRUB_ERR_WRITE_ERROR, N_("failure writing sector 0x%llx "
-						    "to `%s'"),
+      {
+	grub_printf("ARC DISK failure writing sector 0x%llx "
+						    "to `%s'",
 			   (unsigned long long) sector,
 			   disk->name);
+	return grub_error (GRUB_ERR_WRITE_ERROR, "ARC DISK failure writing sector 0x%llx "
+						    "to `%s'",
+			   (unsigned long long) sector,
+			   disk->name);
+      }
       totl -= count;
       buf += count;
     }

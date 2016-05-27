@@ -59,6 +59,7 @@ grub_disk_write (grub_disk_t disk, grub_disk_addr_t sector,
   grub_disk_addr_t aligned_sector;
 
   grub_dprintf ("disk", "Writing `%s'...\n", disk->name);
+  grub_dprintf("disk", "Device name `%s'...\n", disk->dev->name);
 
   if (grub_disk_adjust_range (disk, &sector, &offset, size) != GRUB_ERR_NONE)
     return -1;
@@ -101,12 +102,14 @@ grub_disk_write (grub_disk_t disk, grub_disk_addr_t sector,
 
 	  grub_disk_cache_invalidate (disk->dev->id, disk->id, sector);
 
+          grub_dprintf ("disk", "About to try disk->dev->write #1...\n");
 	  if ((disk->dev->write) (disk, transform_sector (disk, sector),
 				  1, tmp_buf) != GRUB_ERR_NONE)
 	    {
 	      grub_free (tmp_buf);
 	      goto finish;
 	    }
+          grub_dprintf ("disk", "Looks like write #1 worked...\n");
 
 	  grub_free (tmp_buf);
 
@@ -130,10 +133,13 @@ grub_disk_write (grub_disk_t disk, grub_disk_addr_t sector,
 		 << (GRUB_DISK_CACHE_BITS + GRUB_DISK_SECTOR_BITS
 		     - disk->log_sector_size));
 
+          grub_dprintf ("disk", "About to try disk->dev->write #2...\n");
+          grub_dprintf ("disk", "->write: %08llx\n", disk->dev->write);
 	  if ((disk->dev->write) (disk, transform_sector (disk, sector),
 				  n, buf) != GRUB_ERR_NONE)
 	    goto finish;
 
+          grub_dprintf ("disk", "Looks like write #1 worked...\n");
 	  while (n--)
 	    {
 	      grub_disk_cache_invalidate (disk->dev->id, disk->id, sector);

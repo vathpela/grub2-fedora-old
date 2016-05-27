@@ -530,8 +530,9 @@ grub_biosdisk_rw (int cmd, grub_disk_t disk,
 				 (unsigned long long) sector,
 				 disk->name);
 	    case GRUB_BIOSDISK_WRITE:
-	      return grub_error (GRUB_ERR_WRITE_ERROR, N_("failure writing sector 0x%llx "
-							  "to `%s'"),
+              grub_printf("BIOS DISK failure writing sector 0x%llx to `%s'", (unsigned long long) sector, disk->name);
+	      return grub_error (GRUB_ERR_WRITE_ERROR, "BIOS DISK failure writing sector 0x%llx "
+							  "to `%s'",
 				 (unsigned long long) sector,
 				 disk->name);
 	    }
