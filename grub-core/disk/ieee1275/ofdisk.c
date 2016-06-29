@@ -402,23 +402,27 @@ grub_ofdisk_write (grub_disk_t disk, grub_disk_addr_t sector,
 {
   grub_err_t err;
   grub_ssize_t actual;
+  int rc;
 
   grub_dprintf("disk", "Loading into grub_ofdisk_write...\n");
   err = grub_ofdisk_prepare (disk, sector);
   if (err)
     return err;
   grub_dprintf("disk", "Successfully ran grub_ofdisk_prepare...\n");
-  grub_ieee1275_write (last_ihandle, buf, size  << disk->log_sector_size,
-		       &actual);
-  grub_dprintf("disk", "actual: %d\ncompared_to: %d", actual, (grub_ssize_t) (size << disk->log_sector_size));
+  rc = grub_ieee1275_write (last_ihandle, buf, size  << disk->log_sector_size,
+			    &actual);
+  if (rc == -1)
+    return grub_error (GRUB_ERR_WRITE_ERROR,
+		       "Call to ihandle %lu \"write\" method failed\n",
+		       last_ihandle);
+
+  grub_dprintf ("disk", "actual: %d expected: %d\n", actual,
+	       (grub_ssize_t) (size << disk->log_sector_size));
   if (actual != (grub_ssize_t) (size << disk->log_sector_size))
-  {
-          grub_dprintf("disk", "OH NOES failure writing sector 0x%llx to `%s'\n", (unsigned long long) sector, disk->name);
-    return grub_error (GRUB_ERR_WRITE_ERROR, "OH NOES failure writing sector 0x%llx "
-						"to `%s'",
+    return grub_error (GRUB_ERR_WRITE_ERROR,
+		       "failure writing sector 0x%llx to `%s'",
 		       (unsigned long long) sector,
 		       disk->name);
-  }
 
   return 0;
 }

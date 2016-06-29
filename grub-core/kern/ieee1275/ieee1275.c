@@ -249,6 +249,7 @@ grub_ieee1275_write (grub_ieee1275_ihandle_t ihandle, const void *buffer,
   args.ihandle = ihandle;
   args.buf = (grub_ieee1275_cell_t) buffer;
   args.len = (grub_ieee1275_cell_t) len;
+  args.actual = 0;
 
   if (IEEE1275_CALL_ENTRY_FN (&args) == -1)
     return -1;
