@@ -317,6 +317,16 @@ AC_SUBST(grubdirname)
 AC_DEFINE_UNQUOTED(GRUB_DIR_NAME, "$grubdirname",
     [Default grub directory name])
 
+AC_ARG_WITH([espdir],
+            AS_HELP_STRING([--with-espdir=DIR],
+                           [set the name of ESP directory [[guessed]]]),
+                           [espdirname="$with_espdir"],
+                           [espdirname="$PACKAGE"])
+
+AC_SUBST(espdirname)
+AC_DEFINE_UNQUOTED(ESP_DIR_NAME, "$espdirname",
+    [Default ESP directory name])
+
 PKG_PROG_PKG_CONFIG
 AS_IF([$($PKG_CONFIG --exists bash-completion)], [
 	bashcompletiondir=$($PKG_CONFIG --variable=completionsdir bash-completion)
