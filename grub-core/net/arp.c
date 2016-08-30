@@ -33,36 +33,107 @@ enum
 
 enum
   {
-    /* IANA ARP constant to define hardware type as ethernet. */
-    GRUB_NET_ARPHRD_ETHERNET = 1
+    /* IANA defines ARP hardware types at
+     * http://www.iana.org/assignments/arp-parameters/arp-parameters.xhtml
+     */
+    GRUB_NET_ARPHRD_ETHERNET = 1,
+    GRUB_NET_ARPHRD_INFINIBAND = 32,
   };
 
-struct arppkt {
+struct arppkt_ether {
   grub_uint16_t hrd;
   grub_uint16_t pro;
   grub_uint8_t hln;
   grub_uint8_t pln;
   grub_uint16_t op;
-  grub_uint8_t sender_mac[6];
+  grub_uint8_t sender_mac[GRUB_NET_MAC_ADDR_SIZE_ETHERNET];
   grub_uint32_t sender_ip;
-  grub_uint8_t recv_mac[6];
+  grub_uint8_t recv_mac[GRUB_NET_MAC_ADDR_SIZE_ETHERNET];
   grub_uint32_t recv_ip;
 } GRUB_PACKED;
 
+struct arppkt_ipoib {
+  grub_uint16_t hrd;
+  grub_uint16_t pro;
+  grub_uint8_t hln;
+  grub_uint8_t pln;
+  grub_uint16_t op;
+  grub_uint8_t sender_mac[GRUB_NET_MAC_ADDR_SIZE_INFINIBAND];
+  grub_uint32_t sender_ip;
+  grub_uint8_t recv_mac[GRUB_NET_MAC_ADDR_SIZE_INFINIBAND];
+  grub_uint32_t recv_ip;
+} GRUB_PACKED;
+
+union arppkt {
+	struct {
+		grub_uint16_t hrd;
+		grub_uint16_t pro;
+		grub_uint8_t hln;
+		grub_uint8_t pln;
+		grub_uint16_t op;
+	} GRUB_PACKED;
+	struct arppkt_ether ether;
+	struct arppkt_ipoib ipoib;
+};
+
 static int have_pending;
 static grub_uint32_t pending_req;
+
+static inline grub_ssize_t
+arp_pkt_size (grub_uint16_t hrd)
+{
+  switch (hrd) {
+  case GRUB_NET_ARPHRD_ETHERNET:
+    return sizeof (struct arppkt_ether);
+  case GRUB_NET_ARPHRD_INFINIBAND:
+    return sizeof (struct arppkt_ipoib);
+  default:
+    return -1;
+  }
+}
+
+static inline grub_ssize_t
+arp_hrd_from_card (struct grub_net_card *card)
+{
+  grub_link_level_protocol_id_t type = card->default_address.type;
+
+  switch (type)
+    {
+    case GRUB_NET_LINK_LEVEL_PROTOCOL_ETHERNET:
+      return GRUB_NET_ARPHRD_ETHERNET;
+    case GRUB_NET_LINK_LEVEL_PROTOCOL_INFINIBAND:
+      return GRUB_NET_ARPHRD_INFINIBAND;
+    default:
+      return -1;
+    }
+}
+
+static inline grub_ssize_t
+arp_mac_size_from_hrd (grub_uint8_t hrd)
+{
+  switch (hln)
+    {
+    case GRUB_NET_ARPHRD_ETHERNET:
+      return GRUB_NET_MAC_ADDR_SIZE_ETHERNET;
+    case GRUB_NET_ARPHRD_INFINIBAND:
+      return GRUB_NET_MAC_ADDR_SIZE_INFINIBAND;
+    default:
+      return -1;
+    }
+}
 
 grub_err_t
 grub_net_arp_send_request (struct grub_net_network_level_interface *inf,
 			   const grub_net_network_level_address_t *proto_addr)
 {
   struct grub_net_buff nb;
-  struct arppkt *arp_packet;
+  union arppkt *arp_packet;
   grub_net_link_level_address_t target_mac_addr;
   grub_err_t err;
   int i;
   grub_uint8_t *nbd;
   grub_uint8_t arp_data[128];
+  grub_network_level_protocol_id_t type = inf->card.default_addr.type;
 
   if (proto_addr->type != GRUB_NET_NETWORK_LEVEL_PROTOCOL_IPV4)
     return grub_error (GRUB_ERR_BUG, "unsupported address family");
@@ -77,19 +148,44 @@ grub_net_arp_send_request (struct grub_net_network_level_interface *inf,
   if (err)
     return err;
 
-  arp_packet = (struct arppkt *) nb.data;
-  arp_packet->hrd = grub_cpu_to_be16_compile_time (GRUB_NET_ARPHRD_ETHERNET);
-  arp_packet->hln = 6;
+  arp_packet = (union arppkt *) nb.data;
+  switch (type) {
+    case GRUB_NET_LINK_LEVEL_PROTOCOL_ETHERNET:
+	{
+	  struct arppkt_ether *pkt = arp_packet.ether;
+
+	  arp_packet->hrd =
+	    grub_cpu_to_be16_compile_time (GRUB_NET_ARPHRD_ETHERNET);
+	  arp_packet->hln = GRUB_NET_MAC_ADDR_SIZE_ETHERNET;
+	  /* Sender hardware address.  */
+	  grub_memcpy (pkt->sender_mac, &inf->hwaddress.mac,
+		       GRUB_NET_MAC_ADDR_SIZE_ETHERNET);
+	  pkt->sender_ip = inf->address.ipv4;
+	  grub_memset (pkt->recv_mac, 0, GRUB_NET_MAC_ADDR_SIZE_ETHERNET);
+	  pkt->recv_ip = proto_addr->ipv4;
+	}
+      break;
+    case GRUB_NET_LINK_LEVEL_PROTOCOL_INFINIBAND:
+	{
+	  struct arppkt_ether *pkt = arp_packet.ipoib;
+
+	  arp_packet->hrd =
+	    grub_cpu_to_be16_compile_time (GRUB_NET_ARPHRD_INFINIBAND);
+	  arp_packet->hln = GRUB_NET_MAC_ADDR_SIZE_INFINIBAND;
+	  /* Sender hardware address.  */
+	  grub_memcpy (pkt->sender_mac, &inf->hwaddress.mac,
+		       GRUB_NET_MAC_ADDR_SIZE_INFINIBAND);
+	  pkt->sender_ip = inf->address.ipv4;
+	  grub_memset (pkt->recv_mac, 0, GRUB_NET_MAC_ADDR_SIZE_INFINIBAND);
+	  pkt->recv_ip = proto_addr->ipv4;
+	}
+      break;
+  }
   arp_packet->pro = grub_cpu_to_be16_compile_time (GRUB_NET_ETHERTYPE_IP);
   arp_packet->pln = 4;
   arp_packet->op = grub_cpu_to_be16_compile_time (ARP_REQUEST);
-  /* Sender hardware address.  */
-  grub_memcpy (arp_packet->sender_mac, &inf->hwaddress.mac, 6);
-  arp_packet->sender_ip = inf->address.ipv4;
-  grub_memset (arp_packet->recv_mac, 0, 6);
-  arp_packet->recv_ip = proto_addr->ipv4;
   /* Target protocol address */
-  grub_memset (&target_mac_addr.mac, 0xff, 6);
+  grub_memset (&target_mac_addr.mac, 0xff, mac_size);
 
   nbd = nb.data;
   send_ethernet_packet (inf, &nb, target_mac_addr, GRUB_NET_ETHERTYPE_ARP);
@@ -114,26 +210,54 @@ grub_err_t
 grub_net_arp_receive (struct grub_net_buff *nb,
 		      struct grub_net_card *card)
 {
-  struct arppkt *arp_packet = (struct arppkt *) nb->data;
+  union arppkt *arp_packet = (union arppkt *) nb->data;
   grub_net_network_level_address_t sender_addr, target_addr;
   grub_net_link_level_address_t sender_mac_addr;
   struct grub_net_network_level_interface *inf;
+  ssize_t hln = arp_mac_size_from_hrd (arp_packet->hrd);
 
   if (arp_packet->pro != grub_cpu_to_be16_compile_time (GRUB_NET_ETHERTYPE_IP)
-      || arp_packet->pln != 4 || arp_packet->hln != 6
-      || nb->tail - nb->data < (int) sizeof (*arp_packet))
+      || arp_packet->pln != 4 || hln < 0 || arp_packet->hln != hln
+      || nb->tail - nb->data < (int) arp_pkt_size (arp_packet->hrd))
     return GRUB_ERR_NONE;
 
   sender_addr.type = GRUB_NET_NETWORK_LEVEL_PROTOCOL_IPV4;
   target_addr.type = GRUB_NET_NETWORK_LEVEL_PROTOCOL_IPV4;
-  sender_addr.ipv4 = arp_packet->sender_ip;
-  target_addr.ipv4 = arp_packet->recv_ip;
-  if (arp_packet->sender_ip == pending_req)
-    have_pending = 1;
 
-  sender_mac_addr.type = GRUB_NET_LINK_LEVEL_PROTOCOL_ETHERNET;
-  grub_memcpy (sender_mac_addr.mac, arp_packet->sender_mac,
-	       sizeof (sender_mac_addr.mac));
+  switch (arp_packet->hrd)
+    {
+    case GRUB_NET_ARPHRD_ETHERNET:
+	{
+	  struct arppkt_ether *pkt = arp_packet.ether;
+
+	  sender_addr.ipv4 = pkt->sender_ip;
+	  target_addr.ipv4 = pkt->recv_ip;
+
+	  if (pkt->sender_ip == pending_req)
+	    have_pending = 1;
+
+	  sender_mac_addr.type = GRUB_NET_LINK_LEVEL_PROTOCOL_ETHERNET;
+	  grub_memcpy (sender_mac_addr.mac, pkt->sender_mac, hln);
+	}
+      break;
+    case GRUB_NET_ARPHRD_INFINIBAND:
+	{
+	  struct arppkt_ipoib *pkt = arp_packet.ipoib;
+
+	  sender_addr.ipv4 = pkt->sender_ip;
+	  target_addr.ipv4 = pkt->recv_ip;
+
+	  if (pkt->sender_ip == pending_req)
+	    have_pending = 1;
+
+	  sender_mac_addr.type = GRUB_NET_LINK_LEVEL_PROTOCOL_INFINIBAND;
+	  grub_memcpy (sender_mac_addr.mac, pkt->sender_mac, hln);
+	}
+      break;
+    default:
+      return GRUB_ERR_NONE;
+    }
+
   grub_net_link_layer_add_address (card, &sender_addr, &sender_mac_addr, 1);
 
   FOR_NET_NETWORK_LEVEL_INTERFACES (inf)
@@ -142,15 +266,15 @@ grub_net_arp_receive (struct grub_net_buff *nb,
     if (grub_net_addr_cmp (&inf->address, &target_addr) == 0
 	&& arp_packet->op == grub_cpu_to_be16_compile_time (ARP_REQUEST))
       {
-        if ((nb->tail - nb->data) > 50)
+        if ((nb->tail - nb->data) > 128)
           {
             grub_dprintf ("net", "arp packet with abnormal size (%ld bytes).\n",
                          nb->tail - nb->data);
-            nb->tail = nb->data + 50;
+            nb->tail = nb->data + 128;
           }
 	grub_net_link_level_address_t target;
 	struct grub_net_buff nb_reply;
-	struct arppkt *arp_reply;
+	union arppkt *arp_reply;
 	grub_uint8_t arp_data[128];
 	grub_err_t err;
 
@@ -163,21 +287,43 @@ grub_net_arp_receive (struct grub_net_buff *nb,
 	if (err)
 	  return err;
 
-	arp_reply = (struct arppkt *) nb_reply.data;
+	arp_reply = (unionarppkt *) nb_reply.data;
 
-	arp_reply->hrd = grub_cpu_to_be16_compile_time (GRUB_NET_ARPHRD_ETHERNET);
+	arp_reply->hrd = arp_packet->hrd;
 	arp_reply->pro = grub_cpu_to_be16_compile_time (GRUB_NET_ETHERTYPE_IP);
+	arp_reply->hln = hln;
 	arp_reply->pln = 4;
-	arp_reply->hln = 6;
 	arp_reply->op = grub_cpu_to_be16_compile_time (ARP_REPLY);
-	arp_reply->sender_ip = arp_packet->recv_ip;
-	arp_reply->recv_ip = arp_packet->sender_ip;
-	arp_reply->hln = 6;
 
-	target.type = GRUB_NET_LINK_LEVEL_PROTOCOL_ETHERNET;
-	grub_memcpy (target.mac, arp_packet->sender_mac, 6);
-	grub_memcpy (arp_reply->sender_mac, inf->hwaddress.mac, 6);
-	grub_memcpy (arp_reply->recv_mac, arp_packet->sender_mac, 6);
+	switch (arp_packet->hrd)
+	  {
+	  case GRUB_NET_ARPHRD_ETHERNET:
+	      {
+		struct arppkt_ether *reply = arp_reply.ether;
+		struct arppkt_ether *pkt = arp_packet.ether;
+
+		reply->sender_ip = pkt->recv_ip;
+		reply->recv_ip = pkt->sender_ip;
+		target.type = GRUB_NET_LINK_LEVEL_PROTOCOL_ETHERNET;
+		grub_memcpy (target.mac, pkt->sender_mac, hln);
+		grub_memcpy (reply->sender_mac, inf->hwaddress.mac, hln);
+		grub_memcpy (reply->recv_mac, pkt->sender_mac, hln);
+	      }
+	    break;
+	  case GRUB_NET_ARPHRD_INFINIBAND:
+	      {
+		struct arppkt_ipoib *reply = arp_reply.ipoib;
+		struct arppkt_ipoib *pkt = arp_packet.ipoib;
+
+		reply->sender_ip = pkt->recv_ip;
+		reply->recv_ip = pkt->sender_ip;
+		target.type = GRUB_NET_LINK_LEVEL_PROTOCOL_INFINIBAND;
+		grub_memcpy (target.mac, pkt->sender_mac, hln);
+		grub_memcpy (reply->sender_mac, inf->hwaddress.mac, hln);
+		grub_memcpy (reply->recv_mac, pkt->sender_mac, hln);
+	      }
+	    break;
+	  }
 
 	/* Change operation to REPLY and send packet */
 	send_ethernet_packet (inf, &nb_reply, target, GRUB_NET_ETHERTYPE_ARP);

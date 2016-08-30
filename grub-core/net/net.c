@@ -97,6 +97,23 @@ grub_net_link_layer_add_address (struct grub_net_card *card,
     card->new_ll_entry = 0;
 }
 
+static inline grub_ssize_t
+grub_net_dev_mac_size (struct grub_net_card *card)
+{
+  if (!card)
+    return -1;
+
+  switch (card->default_address.type)
+    {
+    case GRUB_NET_LINK_LEVEL_PROTOCOL_ETHERNET:
+      return GRUB_NET_MAC_ADDR_SIZE_ETHERNET;
+    case GRUB_NET_LINK_LEVEL_PROTOCOL_INFINIBAND:
+      return GRUB_NET_MAC_ADDR_SIZE_INFINIBAND;
+    default:
+      return -1;
+    }
+}
+
 int
 grub_net_link_layer_resolve_check (struct grub_net_network_level_interface *inf,
 				   const grub_net_network_level_address_t *proto_addr)
@@ -128,8 +145,8 @@ grub_net_link_layer_resolve (struct grub_net_network_level_interface *inf,
 								   << 48)
 	  && proto_addr->ipv6[1] == (grub_be_to_cpu64_compile_time (1))))
     {
-      hw_addr->type = GRUB_NET_LINK_LEVEL_PROTOCOL_ETHERNET;
-      grub_memset (hw_addr->mac, -1, 6);
+      hw_addr->type = inf->card->default_address.type;
+      grub_memset (hw_addr->mac, -1, grub_net_dev_mac_size (inf->card));
       return GRUB_ERR_NONE;
     }
 
@@ -764,13 +781,25 @@ grub_net_hwaddr_to_str (const grub_net_link_level_address_t *addr, char *str)
       {
 	char *ptr;
 	unsigned i;
-	for (ptr = str, i = 0; i < ARRAY_SIZE (addr->mac); i++)
+	for (ptr = str, i = 0; i < GRUB_NET_MAC_ADDR_SIZE_ETHERNET; i++)
 	  {
 	    grub_snprintf (ptr, GRUB_NET_MAX_STR_HWADDR_LEN - (ptr - str),
 			   "%02x:", addr->mac[i] & 0xff);
 	    ptr += (sizeof ("XX:") - 1);
 	  }
-      return;
+	return;
+      }
+    case GRUB_NET_LINK_LEVEL_PROTOCOL_INFINIBAND:
+      {
+	char *ptr;
+	unsigned i;
+	for (ptr = str, i = 0; i < GRUB_NET_MAC_ADDR_SIZE_INFINIBAND; i++)
+	  {
+	    grub_snprintf (ptr, GRUB_NET_MAX_STR_HWADDR_LEN - (ptr - str),
+			   "%02x:", addr->mac[i] & 0xff);
+	    ptr += (sizeof ("XX:") - 1);
+	  }
+	return;
       }
     }
   grub_printf (_("Unsupported hw address type %d\n"), addr->type);
@@ -780,6 +809,7 @@ int
 grub_net_hwaddr_cmp (const grub_net_link_level_address_t *a,
 		     const grub_net_link_level_address_t *b)
 {
+  grub_size_t size;
   if (a->type < b->type)
     return -1;
   if (a->type > b->type)
@@ -787,10 +817,17 @@ grub_net_hwaddr_cmp (const grub_net_link_level_address_t *a,
   switch (a->type)
     {
     case GRUB_NET_LINK_LEVEL_PROTOCOL_ETHERNET:
-      return grub_memcmp (a->mac, b->mac, sizeof (a->mac));
+      size = GRUB_NET_MAC_ADDR_SIZE_ETHERNET;
+      break;
+    case GRUB_NET_LINK_LEVEL_PROTOCOL_INFINIBAND:
+      size = GRUB_NET_MAC_ADDR_SIZE_INFINIBAND;
+      break;
+    default:
+      grub_printf (_("Unsupported hw address type %d\n"), a->type);
+      return 1;
     }
-  grub_printf (_("Unsupported hw address type %d\n"), a->type);
-  return 1;
+
+    return grub_memcmp (a->mac, b->mac, size);
 }
 
 int

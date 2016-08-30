@@ -40,17 +40,23 @@ enum
     + GRUB_NET_MAX_LINK_HEADER_SIZE
   };
 
-typedef enum grub_link_level_protocol_id 
+typedef enum grub_link_level_protocol_id
 {
-  GRUB_NET_LINK_LEVEL_PROTOCOL_ETHERNET
+  GRUB_NET_LINK_LEVEL_PROTOCOL_ETHERNET,
+  GRUB_NET_LINK_LEVEL_PROTOCOL_INFINIBAND,
 } grub_link_level_protocol_id_t;
+
+#define GRUB_NET_MAC_ADDR_SIZE_ETHERNET		6
+#define GRUB_NET_MAC_ADDR_SIZE_INFINIBAND	20
+
+#define GRUB_MAX_MAC_ADDR_SIZE 32
 
 typedef struct grub_net_link_level_address
 {
   grub_link_level_protocol_id_t type;
   union
   {
-    grub_uint8_t mac[6];
+    grub_uint8_t mac[GRUB_MAX_MAC_ADDR_SIZE];
   };
 } grub_net_link_level_address_t;
 
@@ -495,9 +501,10 @@ grub_net_addr_cmp (const grub_net_network_level_address_t *a,
 /*
   Currently suppoerted adresses:
   ethernet:   XX:XX:XX:XX:XX:XX
+  infiniband  01:02:03:04:05:06:07:08:09:10:11:12:13:14:15:16:17:18:19:20
  */
 
-#define GRUB_NET_MAX_STR_HWADDR_LEN (sizeof ("XX:XX:XX:XX:XX:XX"))
+#define GRUB_NET_MAX_STR_HWADDR_LEN sizeof ("01:02:03:04:05:06:07:08:09:10:11:12:13:14:15:16:17:18:19:20")
 
 void
 grub_net_addr_to_str (const grub_net_network_level_address_t *target,
