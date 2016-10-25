@@ -201,10 +201,12 @@ read_config_file (const char *config)
 
 /* Initialize the screen.  */
 void
-grub_normal_init_page (struct grub_term_output *term,
+grub_normal_init_page (struct grub_term_output *term UNUSED,
 		       int y __attribute__((__unused__)))
 {
+#if 0
   grub_term_cls (term);
+#endif
 
 #if 0
   grub_ssize_t msg_len;
@@ -216,7 +218,7 @@ grub_normal_init_page (struct grub_term_output *term,
   msg_formatted = grub_xasprintf (_("GNU GRUB  version %s"), PACKAGE_VERSION);
   if (!msg_formatted)
     return;
- 
+
   msg_len = grub_utf8_to_ucs4_alloc (msg_formatted,
   				     &unicode_msg, &last_position);
   grub_free (msg_formatted);
@@ -417,6 +419,7 @@ grub_normal_reader_init (int nested)
 {
   struct grub_term_output *term;
   const char *msg_esc = _("ESC at any time exits.");
+#if 0
   char *msg_formatted;
 
   msg_formatted = grub_xasprintf (_("Minimal BASH-like line editing is supported. For "
@@ -425,10 +428,12 @@ grub_normal_reader_init (int nested)
 				  nested ? msg_esc : "");
   if (!msg_formatted)
     return grub_errno;
+#endif
 
   FOR_ACTIVE_TERM_OUTPUTS(term)
   {
     grub_normal_init_page (term, 1);
+#if 0
     grub_term_setcursor (term, 1);
 
     if (grub_term_width (term) > 2 * STANDARD_MARGIN + 20)
@@ -438,9 +443,11 @@ grub_normal_reader_init (int nested)
     grub_putcode ('\n', term);
     grub_putcode ('\n', term);
     grub_putcode ('\n', term);
+#endif
   }
+#if 0
   grub_free (msg_formatted);
- 
+#endif
   return 0;
 }
 
