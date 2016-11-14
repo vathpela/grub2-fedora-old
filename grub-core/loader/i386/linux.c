@@ -803,7 +803,6 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
 
   linux_params.code32_start = prot_mode_target + lh.code32_start - GRUB_LINUX_BZIMAGE_ADDR;
   linux_params.kernel_alignment = (1 << align);
-  linux_params.ps_mouse = linux_params.padding10 =  0;
 
   len = sizeof (linux_params) - sizeof (lh);
   if (grub_file_read (file, (char *) &linux_params + sizeof (lh), len) != len)

@@ -84,7 +84,13 @@ enum
     GRUB_VIDEO_LINUX_TYPE_SIMPLE = 0x70    /* Linear framebuffer without any additional functions.  */
   };
 
-/* For the Linux/i386 boot protocol version 2.10.  */
+#define LINUX_XLF_KERNEL_64			0x01
+#define LINUX_XLF_CAN_BE_LOADED_ABOVE_4G	0x02
+#define LINUX_XLF_EFI_HANDOVER_32		0x04
+#define LINUX_XLF_EFI_HANDOVER_64		0x08
+#define LINUX_XLF_EFI_KEXEC			0x10
+
+/* For the Linux/i386 boot protocol version 2.12.  */
 struct linux_kernel_header
 {
   grub_uint8_t code1[0x0020];
@@ -124,26 +130,29 @@ struct linux_kernel_header
   grub_uint32_t ramdisk_size;		/* initrd size */
   grub_uint32_t bootsect_kludge;	/* obsolete */
   grub_uint16_t heap_end_ptr;		/* Free memory after setup end */
-  grub_uint16_t pad1;			/* Unused */
+  grub_uint8_t ext_loader_ver;		/* Extended loader version */
+  grub_uint8_t ext_loader_type;		/* Extended loader type */
   grub_uint32_t cmd_line_ptr;		/* Points to the kernel command line */
   grub_uint32_t initrd_addr_max;        /* Highest address for initrd */
-  grub_uint32_t kernel_alignment;
-  grub_uint8_t relocatable;
-  grub_uint8_t min_alignment;
-  grub_uint8_t pad[2];
-  grub_uint32_t cmdline_size;
-  grub_uint32_t hardware_subarch;
-  grub_uint64_t hardware_subarch_data;
-  grub_uint32_t payload_offset;
-  grub_uint32_t payload_length;
-  grub_uint64_t setup_data;
-  grub_uint64_t pref_address;
-  grub_uint32_t init_size;
+  grub_uint32_t kernel_alignment;	/* Physical addr alignment required */
+  grub_uint8_t relocatable;		/* Whether kernel is relocatable */
+  grub_uint8_t min_alignment;		/* Minimum alignment as power of two */
+  grub_uint16_t xloadflags;		/* Boot protocol option flags */
+  grub_uint32_t cmdline_size;		/* Maximum size of the kernel cmdline */
+  grub_uint32_t hardware_subarch;	/* Hardware subarchitecture */
+  grub_uint64_t hardware_subarch_data;	/* Subarchitecture-specific data */
+  grub_uint32_t payload_offset;		/* Offset of kernel payload */
+  grub_uint32_t payload_length;		/* Length of kernel payload */
+  grub_uint64_t setup_data;		/* 64-bit physical pointer to linked
+					   list of struct setup_data */
+  grub_uint64_t pref_address;		/* Preferred loading address */
+  grub_uint32_t init_size;		/* Linear memory required during
+					   initialization */
+  grub_uint32_t handover_offset;	/* Offset of EFI stub entry point */
 } GRUB_PACKED;
 
 /* Boot parameters for Linux based on 2.6.12. This is used by the setup
-   sectors of Linux, and must be simulated by GRUB on EFI, because
-   the setup sectors depend on BIOS.  */
+   sectors of Linux. */
 struct linux_kernel_params
 {
   grub_uint8_t video_cursor_x;		/* 0 */
@@ -188,8 +197,9 @@ struct linux_kernel_params
   grub_uint16_t lfb_pages;		/* 32 */
   grub_uint16_t vesa_attrib;		/* 34 */
   grub_uint32_t capabilities;		/* 36 */
+  grub_uint32_t ext_lfb_base;		/* 3a */
 
-  grub_uint8_t padding3[0x40 - 0x3a];
+  grub_uint8_t padding3[0x40 - 0x3e];
 
   grub_uint16_t apm_version;		/* 40 */
   grub_uint16_t apm_code_segment;	/* 42 */
@@ -220,7 +230,11 @@ struct linux_kernel_params
   grub_uint32_t ofw_cif_handler;	/* b8 */
   grub_uint32_t ofw_idt;		/* bc */
 
-  grub_uint8_t padding7[0x1b8 - 0xc0];
+  grub_uint32_t ext_ramdisk_image;	/* c0 */
+  grub_uint32_t ext_ramdisk_size;	/* c4 */
+  grub_uint32_t ext_cmd_line_ptr;	/* c8 */
+
+  grub_uint8_t padding7[0x1b8 - 0xcc];
 
   union
     {
@@ -275,10 +289,7 @@ struct linux_kernel_params
   grub_uint16_t ram_size;		/* obsolete */
   grub_uint16_t vid_mode;		/* Video mode control */
   grub_uint16_t root_dev;		/* Default root device number */
-
-  grub_uint8_t padding10;		/* 1fe */
-  grub_uint8_t ps_mouse;		/* 1ff */
-
+  grub_uint16_t boot_flag;		/* 0xAA55 magic number */
   grub_uint16_t jump;			/* Jump instruction */
   grub_uint32_t header;			/* Magic signature "HdrS" */
   grub_uint16_t version;		/* Boot protocol version supported */
@@ -294,19 +305,25 @@ struct linux_kernel_params
   grub_uint32_t bootsect_kludge;	/* obsolete */
   grub_uint16_t heap_end_ptr;		/* Free memory after setup end */
   grub_uint8_t ext_loader_ver;		/* Extended loader version */
-  grub_uint8_t ext_loader_type;		/* Extended loader type */  
+  grub_uint8_t ext_loader_type;		/* Extended loader type */
   grub_uint32_t cmd_line_ptr;		/* Points to the kernel command line */
   grub_uint32_t initrd_addr_max;	/* Maximum initrd address */
   grub_uint32_t kernel_alignment;	/* Alignment of the kernel */
   grub_uint8_t relocatable_kernel;	/* Is the kernel relocatable */
-  grub_uint8_t pad1[3];
+  grub_uint8_t min_alignment;		/* minimum kernel alignment */
+  grub_uint16_t xloadflags;		/* Boot protocol option flags */
   grub_uint32_t cmdline_size;		/* Size of the kernel command line */
-  grub_uint32_t hardware_subarch;
-  grub_uint64_t hardware_subarch_data;
-  grub_uint32_t payload_offset;
-  grub_uint32_t payload_length;
-  grub_uint64_t setup_data;
-  grub_uint8_t pad2[120];		/* 258 */
+  grub_uint32_t hardware_subarch;	/* Hardware subarchitecture */
+  grub_uint64_t hardware_subarch_data;	/* Subarchitecture-specific data */
+  grub_uint32_t payload_offset;		/* Offset of kernel payload */
+  grub_uint32_t payload_length;		/* Length of kernel payload */
+  grub_uint64_t setup_data;		/* 64-bit physical pointer to linked
+					   list of struct setup_data */
+  grub_uint64_t pref_address;		/* Preferred loading address */
+  grub_uint32_t init_size;		/* Linear memory required during
+					   initialization */
+  grub_uint32_t handover_offset;	/* Offset of EFI stub entry point */
+  grub_uint8_t pad1[104];		/* 268 */
   struct grub_e820_mmap e820_map[(0x400 - 0x2d0) / 20];	/* 2d0 */
 
 } GRUB_PACKED;
