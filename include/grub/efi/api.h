@@ -579,6 +579,8 @@ typedef grub_uint8_t grub_efi_ip_address_t[8] __attribute__ ((aligned(4)));
 typedef grub_efi_uint64_t grub_efi_physical_address_t;
 typedef grub_efi_uint64_t grub_efi_virtual_address_t;
 
+#define GRUB_EFI_PHYSICAL_ADDRESS_MAX (0xffffffffffffffffULL)
+
 struct grub_efi_guid
 {
   grub_uint32_t data1;

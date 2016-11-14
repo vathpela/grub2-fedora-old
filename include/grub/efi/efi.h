@@ -24,6 +24,10 @@
 #include <grub/dl.h>
 #include <grub/efi/api.h>
 
+#define BYTES_TO_PAGES(bytes)	(((bytes) + 0xfff) >> 12)
+#define BYTES_TO_PAGES_DOWN(bytes)	((bytes) >> 12)
+#define PAGES_TO_BYTES(pages)	((pages) << 12)
+
 /* Functions.  */
 void *EXPORT_FUNC(grub_efi_locate_protocol) (grub_efi_guid_t *protocol,
 					     void *registration);
@@ -40,6 +44,15 @@ void EXPORT_FUNC(grub_efi_stall) (grub_efi_uintn_t microseconds);
 void *
 EXPORT_FUNC(grub_efi_allocate_pages) (grub_efi_physical_address_t address,
 				      grub_efi_uintn_t pages);
+void *
+EXPORT_FUNC(grub_efi_allocate_pages_max) (grub_efi_physical_address_t max,
+					  grub_efi_uintn_t pages);
+void *
+EXPORT_FUNC(grub_efi_allocate_aligned_max) (grub_efi_physical_address_t max,
+					    grub_size_t size,
+					    grub_efi_uint16_t alignment,
+					    grub_efi_physical_address_t *addr,
+					    grub_efi_uintn_t *pages);
 void EXPORT_FUNC(grub_efi_free_pages) (grub_efi_physical_address_t address,
 				       grub_efi_uintn_t pages);
 int
