@@ -1659,7 +1659,7 @@ module = {
 
 module = {
   name = linux;
-  x86 = loader/i386/linux.c;
+  x86_pc = loader/i386/linux.c;
   xen = loader/i386/xen.c;
   i386_pc = lib/i386/pc/vesa_modes_table.c;
   mips = loader/mips/linux.c;
@@ -1668,6 +1668,8 @@ module = {
   ia64_efi = loader/ia64/efi/linux.c;
   arm = loader/arm/linux.c;
   arm64 = loader/arm64/linux.c;
+  x86_efi = loader/i386/linuxefi.c;
+  x86_efi = loader/efi/linux.c;
   common = loader/linux.c;
   common = lib/cmdline.c;
   enable = noemu;
