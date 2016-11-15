@@ -104,7 +104,7 @@ typedef grub_uint64_t	grub_addr_t;
 typedef grub_uint64_t	grub_size_t;
 typedef grub_int64_t	grub_ssize_t;
 
-# define GRUB_SIZE_MAX 18446744073709551615UL
+# define GRUB_SIZE_MAX 18446744073709551615ULL
 
 # if GRUB_CPU_SIZEOF_LONG == 8
 #  define PRIxGRUB_SIZE	 "lx"
