@@ -229,7 +229,7 @@ fail:
   return grub_errno;
 }
 
-static grub_command_t cmd_linux, cmd_initrd;
+static grub_command_t cmd_linux, cmd_initrd, cmd_linuxefi, cmd_initrdefi;
 
 GRUB_MOD_INIT(linuxefi)
 {
@@ -240,6 +240,16 @@ GRUB_MOD_INIT(linuxefi)
     grub_register_command ("initrd", grub_cmd_initrd,
                            0, N_("Load initrd."));
 
+  /* Lots of distros shipped these commands, and since they behave the same
+   * way, we get better compatibility by making them aliases of one another.
+   */
+  cmd_linuxefi =
+    grub_register_command ("linuxefi", grub_cmd_linux,
+                           0, N_("Load Linux."));
+  cmd_initrdefi =
+    grub_register_command ("initrdefi", grub_cmd_initrd,
+                           0, N_("Load initrd."));
+
   my_mod = mod;
 }
 
@@ -247,4 +257,6 @@ GRUB_MOD_FINI(linuxefi)
 {
   grub_unregister_command (cmd_linux);
   grub_unregister_command (cmd_initrd);
+  grub_unregister_command (cmd_linuxefi);
+  grub_unregister_command (cmd_initrdefi);
 }
