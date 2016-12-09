@@ -105,6 +105,26 @@ linux_entry ()
   if [ -z "$boot_device_id" ]; then
       boot_device_id="$(grub_get_device_id "${GRUB_DEVICE}")"
   fi
+
+  if [ "x${GRUB_ENABLE_BLSCFG}" = "xtrue" ]; then
+    if [ x$dirname = x/ ]; then
+      if [ -z "${prepare_root_cache}" ]; then
+        prepare_grub_to_access_device ${GRUB_DEVICE}
+      fi
+    else
+      if [ -z "${prepare_boot_cache}" ]; then
+        prepare_grub_to_access_device ${GRUB_DEVICE_BOOT}
+      fi
+    fi
+
+    bootefi_device="`${grub_probe} --target=device /boot/efi/`"
+    prepare_grub_to_access_device ${bootefi_device} boot
+
+    echo blscfg
+
+    exit 0
+  fi
+
   if [ x$type != xsimple ] ; then
       case $type in
 	  recovery)
