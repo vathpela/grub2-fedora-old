@@ -44,14 +44,10 @@ static char *linux_cmdline;
 static grub_err_t
 grub_linuxefi_boot (void)
 {
-  int offset = 0;
-
-#ifdef __x86_64__
-  offset = 512;
-#endif
   asm volatile ("cli");
 
-  return grub_efi_linux_boot ((char *)kernel_mem, handover_offset + offset,
+  return grub_efi_linux_boot ((char *)kernel_mem,
+			      handover_offset,
 			      params);
 }
 
@@ -240,6 +236,24 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
       goto fail;
     }
 
+#ifdef defined(__x86_64__) || defined(__aarch64__)
+  if (!(lh.xloadflags & LINUX_XLF_KERNEL_64))
+    {
+      grub_error (GRUB_ERR_BAD_OS, N_("kernel doesn't support 64-bit CPUs"));
+      goto fail;
+    }
+#endif
+
+#if defined(__i386__)
+  if ((lh.xloadflags & LINUX_XLF_KERNEL_64) &&
+      !(lh.xloadflags & LINUX_XLF_EFI_HANDOVER_32))
+    {
+      grub_error (GRUB_ERR_BAD_OS,
+		  N_("kernel doesn't support 32-bit handover"));
+      goto fail;
+    }
+#endif
+
   linux_cmdline = grub_efi_allocate_pages_max(0x3fffffff,
 					 BYTES_TO_PAGES(lh.cmdline_size + 1));
 
@@ -277,9 +291,13 @@ grub_cmd_linux (grub_command_t cmd __attribute__ ((unused)),
       goto fail;
     }
 
-  grub_memcpy (kernel_mem, (char *)kernel + start, len);
+  grub_dprintf ("linuxefi", "kernel_mem = %lx\n", (unsigned long) kernel_mem);
+
   grub_loader_set (grub_linuxefi_boot, grub_linuxefi_unload, 0);
   loaded=1;
+  lh.code32_start = (grub_uint32_t)(grub_addr_t) kernel_mem;
+
+  grub_memcpy (kernel_mem, (char *)kernel + start, filelen - start);
 
   lh.code32_start = (grub_uint32_t)(grub_uint64_t) kernel_mem;
   grub_memcpy (params, &lh, 2 * 512);
