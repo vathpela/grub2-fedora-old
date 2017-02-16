@@ -362,6 +362,7 @@ else
 fi
 
 # These are not a "must".
+AM_V_MAKEINFO
 AC_PATH_PROGS(MAKEINFO, makeinfo true)
 
 #
