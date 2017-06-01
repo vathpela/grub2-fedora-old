@@ -51,6 +51,33 @@ EXPORT_FUNC(grub_efi_get_memory_map) (grub_efi_uintn_t *memory_map_size,
 				      grub_efi_uintn_t *map_key,
 				      grub_efi_uintn_t *descriptor_size,
 				      grub_efi_uint32_t *descriptor_version);
+
+static inline grub_efi_status_t
+__attribute__((__unused__))
+grub_efi_allocate_pool (grub_efi_memory_type_t pool_type,
+			grub_efi_uintn_t buffer_size,
+			void **buffer)
+{
+  grub_efi_boot_services_t *b;
+  grub_efi_status_t status;
+
+  b = grub_efi_system_table->boot_services;
+  status = efi_call_3 (b->allocate_pool, pool_type, buffer_size, buffer);
+  return status;
+}
+
+static inline grub_efi_status_t
+__attribute__((__unused__))
+grub_efi_free_pool (void *buffer)
+{
+  grub_efi_boot_services_t *b;
+  grub_efi_status_t status;
+
+  b = grub_efi_system_table->boot_services;
+  status = efi_call_1 (b->free_pool, buffer);
+  return status;
+}
+
 grub_efi_loaded_image_t *EXPORT_FUNC(grub_efi_get_loaded_image) (grub_efi_handle_t image_handle);
 void EXPORT_FUNC(grub_efi_print_device_path) (grub_efi_device_path_t *dp);
 char *EXPORT_FUNC(grub_efi_get_filename) (grub_efi_device_path_t *dp);
